@@ -1,5 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     Dimensions,
@@ -15,6 +16,7 @@ const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
     const [code, setCode] = useState('');
+    const router = useRouter();
     const PIN_LENGTH = 5;
 
     const handleNumberPress = (num: number) => {
@@ -36,8 +38,8 @@ export default function LoginScreen() {
     const handleLogin = () => {
         if (code.length === PIN_LENGTH) {
             console.log('Código ingresado:', code);
-            // TODO: Implementar lógica de autenticación
-            // router.push('/(tabs)');
+            // Navegar a la pantalla de fichaje
+            router.replace('/(tabs)/fichaje');
         }
     };
 
@@ -47,6 +49,11 @@ export default function LoginScreen() {
             // Vibración de éxito al completar el PIN
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             console.log('PIN completo:', code);
+
+            // Navegar automáticamente tras un breve delay
+            setTimeout(() => {
+                handleLogin();
+            }, 300);
         }
     }, [code]);
 

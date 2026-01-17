@@ -5,20 +5,22 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-// Comentamos el anchor para permitir navegación flexible
-// export const unstable_settings = {
-//   anchor: '(tabs)',
-// };
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
+        {/* Entry point */}
         <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
+
+        {/* Grupo de autenticación */}
+        <Stack.Screen name="(auth)" />
+
+        {/* Grupo principal con tabs */}
         <Stack.Screen name="(tabs)" />
+
+        {/* Modales y otras pantallas */}
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
