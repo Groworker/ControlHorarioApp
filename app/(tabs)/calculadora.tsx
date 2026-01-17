@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.light.cardBackground,
         paddingVertical: 20,
         paddingHorizontal: 24,
-        paddingTop: 70,
+        paddingTop: 83,
         borderBottomWidth: 1,
         borderBottomColor: Colors.light.border,
     },

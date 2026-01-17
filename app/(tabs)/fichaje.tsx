@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function HomeScreen() {
+export default function FichajeScreen() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Actualizar el reloj cada segundo
@@ -49,7 +50,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
       {/* Sección del Reloj */}
@@ -83,7 +84,7 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -95,6 +96,7 @@ const styles = StyleSheet.create({
   clockSection: {
     backgroundColor: '#fff',
     padding: 24,
+    paddingTop: 40,
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',

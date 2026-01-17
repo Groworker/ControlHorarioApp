@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
         borderBottomColor: Colors.light.border,
     },
     headerTitle: {
-        fontSize: 32,
+        fontSize: 28,
         fontWeight: 'bold',
         color: Colors.light.text,
     },
