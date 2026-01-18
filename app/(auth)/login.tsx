@@ -1,56 +1,88 @@
+import { authService } from '@/services/auth.service';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+    ActivityIndicator,
     Dimensions,
     ImageBackground,
     StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
     const [code, setCode] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const router = useRouter();
     const PIN_LENGTH = 5;
 
     const handleNumberPress = (num: number) => {
-        if (code.length < PIN_LENGTH) {
+        if (code.length < PIN_LENGTH && !isLoading) {
             // Vibración ligera al presionar un número
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setCode(code + num.toString());
+            // Limpiar mensaje de error al escribir
+            if (errorMessage) setErrorMessage('');
         }
     };
 
     const handleDelete = () => {
-        if (code.length > 0) {
+        if (code.length > 0 && !isLoading) {
             // Vibración media al borrar
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             setCode(code.slice(0, -1));
+            // Limpiar mensaje de error al borrar
+            if (errorMessage) setErrorMessage('');
         }
     };
 
-    const handleLogin = () => {
-        if (code.length === PIN_LENGTH) {
-            console.log('Código ingresado:', code);
-            // Navegar a la pantalla de fichaje
-            router.replace('/(tabs)/fichaje');
+    const handleLogin = async () => {
+        if (code.length === PIN_LENGTH && !isLoading) {
+            setIsLoading(true);
+            setErrorMessage('');
+
+            try {
+                // Intentar login con el código ingresado
+                const result = await authService.loginWithCode(code);
+
+                if (result.success && result.user) {
+                    // Vibración de éxito
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    console.log('Login exitoso:', result.user.full_name);
+
+                    // Navegar a la pantalla de fichaje
+                    router.replace('/(tabs)/fichaje');
+                } else {
+                    // Vibración de error
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                    setErrorMessage(result.error || 'Código inválido');
+                    setCode(''); // Limpiar el código
+                }
+            } catch (error) {
+                console.error('Error en login:', error);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                setErrorMessage('Error al conectar con el servidor');
+                setCode('');
+            } finally {
+                setIsLoading(false);
+            }
         }
     };
 
     // Auto-login cuando se completen 5 dígitos
     React.useEffect(() => {
-        if (code.length === PIN_LENGTH) {
-            // Vibración de éxito al completar el PIN
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            console.log('PIN completo:', code);
+        if (code.length === PIN_LENGTH && !isLoading) {
+            // Vibración ligera al completar el PIN
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-            // Navegar automáticamente tras un breve delay
+            // Esperar un momento antes de validar
             setTimeout(() => {
                 handleLogin();
             }, 300);
@@ -107,6 +139,21 @@ export default function LoginScreen() {
                         </View>
                     ))}
                 </View>
+
+                {/* Mensaje de error */}
+                {errorMessage ? (
+                    <View style={styles.errorContainer}>
+                        <Text style={styles.errorText}>{errorMessage}</Text>
+                    </View>
+                ) : null}
+
+                {/* Indicador de carga */}
+                {isLoading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                        <Text style={styles.loadingText}>Verificando...</Text>
+                    </View>
+                ) : null}
 
                 {/* Teclado Numérico */}
                 <View style={styles.keypadContainer}>
@@ -252,5 +299,30 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
         color: '#FFFFFF',
+    },
+    errorContainer: {
+        backgroundColor: 'rgba(239, 68, 68, 0.9)',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 8,
+        marginBottom: 20,
+        maxWidth: 350,
+    },
+    errorText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    loadingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 20,
+    },
+    loadingText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '500',
     },
 });

@@ -15,15 +15,22 @@ export const authService = {
             }
 
             // Buscar usuario por código
+            // Usamos maybeSingle() en lugar de single() para evitar error cuando no hay resultados
             const { data: user, error } = await supabase
                 .from('users')
                 .select('*')
                 .eq('employee_code', employeeCode)
                 .eq('is_active', true)
-                .single();
+                .maybeSingle(); // Retorna null si no hay resultados, en lugar de lanzar error
 
-            if (error || !user) {
-                console.error('Login error:', error);
+            // Si hay error de base de datos (diferente de "no encontrado")
+            if (error) {
+                console.error('Database error:', error);
+                return { success: false, error: 'Error al verificar el código' };
+            }
+
+            // Si no se encontró el usuario
+            if (!user) {
                 return { success: false, error: 'Código inválido o usuario no encontrado' };
             }
 
