@@ -14,20 +14,22 @@ export const clockService = {
     /**
      * Registrar fichaje (entrada, salida, descanso, etc.)
      */
-    async clockEntry(entryType: EntryType): Promise<{ success: boolean; entry?: ClockEntry; error?: string }> {
+    async clockEntry(entryType: EntryType, customTime?: Date): Promise<{ success: boolean; entry?: ClockEntry; error?: string }> {
         try {
             const user = await authService.getCurrentUser();
             if (!user) {
                 return { success: false, error: 'No autenticado' };
             }
 
+            const clockTime = customTime ? customTime.toISOString() : new Date().toISOString();
+
             const { data, error } = await supabase
                 .from('clock_entries')
                 .insert({
                     user_id: user.id,
                     entry_type: entryType,
-                    clock_time: new Date().toISOString(),
-                    is_manual: false,
+                    clock_time: clockTime,
+                    is_manual: customTime ? true : false, // Si tiene hora personalizada, marcarlo como manual
                 })
                 .select()
                 .single();
