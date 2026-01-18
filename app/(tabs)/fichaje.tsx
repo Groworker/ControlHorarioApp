@@ -2,6 +2,7 @@ import type { ClockEntry } from '@/lib/supabase';
 import { clockService, type EntryType } from '@/services/clock.service';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
+import * as Notifications from 'expo-notifications';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -25,6 +26,11 @@ export default function FichajeScreen() {
   const [isFetching, setIsFetching] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Estado para el descanso activo
+  const [isOnBreak, setIsOnBreak] = useState(false);
+  const [breakStartTime, setBreakStartTime] = useState<Date | null>(null);
+  const [breakElapsedSeconds, setBreakElapsedSeconds] = useState(0);
+
   // Actualizar el reloj cada segundo
   useEffect(() => {
     const timer = setInterval(() => {
@@ -33,6 +39,71 @@ export default function FichajeScreen() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Contador del descanso
+  useEffect(() => {
+    if (!isOnBreak || !breakStartTime) return;
+
+    const breakTimer = setInterval(() => {
+      const elapsed = Math.floor((new Date().getTime() - breakStartTime.getTime()) / 1000);
+      setBreakElapsedSeconds(elapsed);
+    }, 1000);
+
+    return () => clearInterval(breakTimer);
+  }, [isOnBreak, breakStartTime]);
+
+  // Configurar notificaciones
+  useEffect(() => {
+    // Configurar cómo se manejan las notificaciones
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+
+    // Solicitar permisos de notificaciones
+    registerForPushNotificationsAsync();
+  }, []);
+
+  const registerForPushNotificationsAsync = async () => {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== 'granted') {
+      console.log('No se obtuvieron permisos para notificaciones');
+    }
+  };
+
+  const scheduleBreakNotification = async () => {
+    try {
+      // Programar notificación para 20 segundos en el futuro
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "⏰ Descanso completado",
+          body: "Has cumplido tus 30 minutos de descanso. ¡Es hora de volver al trabajo!",
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 1800, // 20 segundos para pruebas
+          repeats: false,
+        },
+      });
+
+      console.log('Notificación programada para 20 segundos');
+    } catch (error) {
+      console.error('Error programando notificación:', error);
+    }
+  };
 
   // Cargar fichajes cuando la pantalla está en foco
   useFocusEffect(
@@ -104,15 +175,40 @@ export default function FichajeScreen() {
     }
   };
 
+  const hasBreakInCurrentShift = (entries: ClockEntry[], exitType: EntryType): boolean => {
+    // Para SALIDA, verificar si hay DESCANSO entre ENTRADA y ahora
+    if (exitType === 'SALIDA') {
+      const entradaIndex = entries.findIndex(e => e.entry_type === 'ENTRADA');
+      if (entradaIndex === -1) return false;
+
+      // Buscar DESCANSO después de ENTRADA pero antes de cualquier ENTRADA_2
+      const entrada2Index = entries.findIndex(e => e.entry_type === 'ENTRADA_2');
+      const endIndex = entrada2Index !== -1 ? entrada2Index : entries.length;
+
+      return entries.slice(entradaIndex, endIndex).some(e => e.entry_type === 'DESCANSO');
+    }
+
+    // Para SALIDA_2, verificar si hay DESCANSO entre ENTRADA_2 y ahora
+    if (exitType === 'SALIDA_2') {
+      const entrada2Index = entries.findIndex(e => e.entry_type === 'ENTRADA_2');
+      if (entrada2Index === -1) return false;
+
+      return entries.slice(entrada2Index).some(e => e.entry_type === 'DESCANSO');
+    }
+
+    return false;
+  };
+
   const handleClockIn = async (entryType: EntryType) => {
     if (isLoading) return;
 
-    // Si es SALIDA o SALIDA_2, verificar si tuvo descanso
-    if ((entryType === 'SALIDA' || entryType === 'SALIDA_2') && !hasBreakToday(todayEntries)) {
+    // Si es SALIDA o SALIDA_2, verificar si tuvo descanso EN ESE TURNO
+    if ((entryType === 'SALIDA' || entryType === 'SALIDA_2') && !hasBreakInCurrentShift(todayEntries, entryType)) {
       // Preguntar si tuvo descanso
+      const turno = entryType === 'SALIDA' ? 'primer turno' : 'segundo turno';
       Alert.alert(
         'Descanso',
-        '¿Has realizado descanso de 30 minutos en tu jornada laboral?',
+        `¿Has realizado descanso de 30 minutos en tu ${turno}?`,
         [
           {
             text: 'Sí',
@@ -168,11 +264,16 @@ export default function FichajeScreen() {
           Alert.alert('Error', result.error || 'No se pudo registrar el fichaje');
         }
       } else {
-        // NO tuvo descanso: añadir 30 minutos a la hora de salida
+        // NO tuvo descanso: registrar descanso obligatorio + salida con +30min
+        // 1. Registrar 2 fichajes de DESCANSO (inicio y fin) en la hora actual
+        await clockService.clockEntry('DESCANSO');
+        await clockService.clockEntry('DESCANSO');
+
+        // 2. Calcular hora de salida con +30 minutos
         const exitTime = new Date();
         exitTime.setMinutes(exitTime.getMinutes() + 30);
 
-        // Registrar salida con hora personalizada (+30min)
+        // 3. Registrar salida con hora personalizada (+30min)
         const result = await clockService.clockEntry(exitType, exitTime);
 
         if (result.success && result.entry) {
@@ -181,7 +282,7 @@ export default function FichajeScreen() {
 
           Alert.alert(
             '¡Fichaje registrado!',
-            `${getEntryTypeLabel(exitType)} registrada con 30 minutos adicionales por descanso obligatorio`,
+            `Se ha registrado descanso de 30min y ${getNextEntryLabel(exitType)} a las ${exitTime.getHours().toString().padStart(2, '0')}:${exitTime.getMinutes().toString().padStart(2, '0')}`,
             [{ text: 'OK' }]
           );
         } else {
@@ -203,26 +304,31 @@ export default function FichajeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      // Si es DESCANSO, registrar automáticamente 30 minutos
+      // Si es DESCANSO, iniciar el contador
       if (entryType === 'DESCANSO') {
         const result = await clockService.clockEntry('DESCANSO');
 
         if (result.success && result.entry) {
-          // Registrar automáticamente fin de descanso después de 30 minutos
-          await clockService.clockEntry('DESCANSO'); // El segundo DESCANSO marca el fin
+          // Iniciar el contador del descanso
+          setIsOnBreak(true);
+          setBreakStartTime(new Date(result.entry.clock_time));
+          setBreakElapsedSeconds(0);
+
+          // Programar notificación para 20 segundos en el futuro
+          await scheduleBreakNotification();
 
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
           Alert.alert(
-            '¡Descanso registrado!',
-            'Se han registrado 30 minutos de descanso automáticamente',
+            '¡Descanso iniciado!',
+            'Recibirás una notificación en 20 segundos.',
             [{ text: 'OK' }]
           );
 
-          // Recargar fichajes
           await loadTodayEntries();
         } else {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          Alert.alert('Error', result.error || 'No se pudo registrar el descanso');
+          Alert.alert('Error', result.error || 'No se pudo iniciar el descanso');
         }
       } else {
         // Fichaje normal (ENTRADA/SALIDA)
@@ -235,7 +341,7 @@ export default function FichajeScreen() {
 
           Alert.alert(
             '¡Fichaje registrado!',
-            `${getEntryTypeLabel(entryType)} registrada correctamente`,
+            `${getNextEntryLabel(entryType)} registrada correctamente`,
             [{ text: 'OK' }]
           );
         } else {
@@ -252,7 +358,51 @@ export default function FichajeScreen() {
     }
   };
 
+  const finishBreak = async () => {
+    if (!isOnBreak || !breakStartTime) return;
+
+    setIsLoading(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      // Registrar el fin del descanso
+      const result = await clockService.clockEntry('DESCANSO');
+
+      if (result.success) {
+        setIsOnBreak(false);
+        setBreakStartTime(null);
+        setBreakElapsedSeconds(0);
+
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await loadTodayEntries();
+
+        const minutes = Math.floor(breakElapsedSeconds / 60);
+        const seconds = breakElapsedSeconds % 60;
+
+        Alert.alert(
+          '¡Descanso finalizado!',
+          `Duración total: ${minutes}m ${seconds}s`,
+          [{ text: 'OK' }]
+        );
+      } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert('Error', result.error || 'No se pudo finalizar el descanso');
+      }
+    } catch (error) {
+      console.error('Error finalizando descanso:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Error', 'Ocurrió un error al finalizar el descanso');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const getAvailableActions = (): EntryType[] => {
+    // Si está en descanso, no mostrar ningún botón (solo "Finalizar descanso")
+    if (isOnBreak) {
+      return [];
+    }
+
     if (!lastEntry) {
       return ['ENTRADA'];
     }
@@ -262,28 +412,140 @@ export default function FichajeScreen() {
       return ['DESCANSO', 'SALIDA'];
     }
 
-    // Después de SALIDA, mostrar ENTRADA
+    // Después de SALIDA, alternar entre ENTRADA y ENTRADA_2 para soportar turnos ilimitados
     if (lastEntry.entry_type === 'SALIDA') {
-      return ['ENTRADA'];
+      const salidasCount = todayEntries.filter(e => e.entry_type === 'SALIDA').length;
+      // Primera salida → ENTRADA_2, siguientes salidas → alternar
+      return salidasCount % 2 === 1 ? ['ENTRADA_2'] : ['ENTRADA'];
     }
 
-    // Después de DESCANSO, mostrar SALIDA
+    // Después de ENTRADA_2, mostrar DESCANSO y SALIDA_2
+    if (lastEntry.entry_type === 'ENTRADA_2') {
+      return ['DESCANSO', 'SALIDA_2'];
+    }
+
+    // Después de SALIDA_2, permitir más turnos alternando tipos
+    if (lastEntry.entry_type === 'SALIDA_2') {
+      const salidas2Count = todayEntries.filter(e => e.entry_type === 'SALIDA_2').length;
+      return salidas2Count % 2 === 1 ? ['ENTRADA'] : ['ENTRADA_2'];
+    }
+
+    // Después de DESCANSO, determinar SALIDA correcta según última entrada
     if (lastEntry.entry_type === 'DESCANSO') {
-      return ['SALIDA'];
+      const descansoIndex = todayEntries.findIndex(e => e.id === lastEntry.id);
+      const entriesBeforeBreak = todayEntries.slice(0, descansoIndex);
+      const lastEntrada = [...entriesBeforeBreak].reverse().find(
+        e => e.entry_type === 'ENTRADA' || e.entry_type === 'ENTRADA_2'
+      );
+      return lastEntrada?.entry_type === 'ENTRADA_2' ? ['SALIDA_2'] : ['SALIDA'];
     }
 
     return ['ENTRADA'];
   };
 
-  const getEntryTypeLabel = (type: EntryType): string => {
-    const labels: Record<EntryType, string> = {
-      'ENTRADA': '1ª Entrada',
-      'SALIDA': '1ª Salida',
-      'ENTRADA_2': '2ª Entrada',
-      'SALIDA_2': '2ª Salida',
-      'DESCANSO': 'Descanso',
-    };
-    return labels[type];
+  // Calcular etiqueta para el próximo fichaje (para botones)
+  const getNextEntryLabel = (type: EntryType): string => {
+    if (type === 'DESCANSO') return 'Descanso';
+
+    const entradasCount = todayEntries.filter(e =>
+      e.entry_type === 'ENTRADA' || e.entry_type === 'ENTRADA_2'
+    ).length;
+
+    const salidasCount = todayEntries.filter(e =>
+      e.entry_type === 'SALIDA' || e.entry_type === 'SALIDA_2'
+    ).length;
+
+    if (type === 'ENTRADA' || type === 'ENTRADA_2') {
+      const turnoNum = entradasCount + 1;
+      return `${turnoNum}ª Entrada`;
+    }
+
+    if (type === 'SALIDA' || type === 'SALIDA_2') {
+      const turnoNum = salidasCount + 1;
+      return `${turnoNum}ª Salida`;
+    }
+
+    return type;
+  };
+
+  // Calcular etiqueta para fichaje existente (para historial)
+  const getEntryLabel = (entry: ClockEntry, allEntries: ClockEntry[]): string => {
+    if (entry.entry_type === 'DESCANSO') return 'Descanso';
+
+    // Encontrar la posición de esta entrada específica entre todas las entradas/salidas
+    const sortedEntries = [...allEntries].sort((a, b) =>
+      new Date(a.clock_time).getTime() - new Date(b.clock_time).getTime()
+    );
+
+    if (entry.entry_type === 'ENTRADA' || entry.entry_type === 'ENTRADA_2') {
+      const entradasBeforeThis = sortedEntries.filter((e, idx) =>
+        (e.entry_type === 'ENTRADA' || e.entry_type === 'ENTRADA_2') &&
+        sortedEntries.indexOf(e) <= sortedEntries.indexOf(entry)
+      );
+      return `${entradasBeforeThis.length}ª Entrada`;
+    }
+
+    if (entry.entry_type === 'SALIDA' || entry.entry_type === 'SALIDA_2') {
+      const salidasBeforeThis = sortedEntries.filter((e, idx) =>
+        (e.entry_type === 'SALIDA' || e.entry_type === 'SALIDA_2') &&
+        sortedEntries.indexOf(e) <= sortedEntries.indexOf(entry)
+      );
+      return `${salidasBeforeThis.length}ª Salida`;
+    }
+
+    return entry.entry_type;
+  };
+
+  // Calcular tiempo total de descanso del día (en minutos)
+  const calculateBreakTime = (entries: ClockEntry[]): number => {
+    const sortedEntries = [...entries].sort((a, b) =>
+      new Date(a.clock_time).getTime() - new Date(b.clock_time).getTime()
+    );
+
+    const descansos = sortedEntries.filter(e => e.entry_type === 'DESCANSO');
+    let totalBreakMinutes = 0;
+
+    // Calcular diferencia entre cada par de DESCANSO
+    for (let i = 0; i < descansos.length - 1; i += 2) {
+      const start = new Date(descansos[i].clock_time).getTime();
+      const end = new Date(descansos[i + 1].clock_time).getTime();
+      totalBreakMinutes += (end - start) / (1000 * 60);
+    }
+
+    // Si está en descanso ahora, añadir tiempo actual
+    if (isOnBreak && breakStartTime) {
+      const currentBreakMinutes = (new Date().getTime() - breakStartTime.getTime()) / (1000 * 60);
+      totalBreakMinutes += currentBreakMinutes;
+    }
+
+    return Math.floor(totalBreakMinutes);
+  };
+
+  // Calcular horas trabajadas del día (en minutos)
+  const calculateWorkedHours = (entries: ClockEntry[]): number => {
+    const sortedEntries = [...entries].sort((a, b) =>
+      new Date(a.clock_time).getTime() - new Date(b.clock_time).getTime()
+    );
+
+    let totalWorkedMinutes = 0;
+
+    // Encontrar todos los pares ENTRADA-SALIDA
+    const entradas = sortedEntries.filter(e => e.entry_type === 'ENTRADA' || e.entry_type === 'ENTRADA_2');
+    const salidas = sortedEntries.filter(e => e.entry_type === 'SALIDA' || e.entry_type === 'SALIDA_2');
+
+    // Calcular tiempo entre cada par
+    const pairs = Math.min(entradas.length, salidas.length);
+    for (let i = 0; i < pairs; i++) {
+      const entradaTime = new Date(entradas[i].clock_time).getTime();
+      const salidaTime = new Date(salidas[i].clock_time).getTime();
+      totalWorkedMinutes += (salidaTime - entradaTime) / (1000 * 60);
+    }
+
+    // Restar tiempo de descanso
+    const breakMinutes = calculateBreakTime(entries);
+    totalWorkedMinutes -= breakMinutes;
+
+    return Math.max(0, Math.floor(totalWorkedMinutes));
   };
 
   const formatEntryTime = (dateStr: string) => {
@@ -363,6 +625,27 @@ export default function FichajeScreen() {
           )}
         </View>
 
+        {/* Contador del Descanso Activo */}
+        {isOnBreak && (
+          <View style={styles.breakTimerSection}>
+            <Text style={styles.breakTimerTitle}>Descanso en curso</Text>
+            <View style={styles.breakTimerDisplay}>
+              <Text style={styles.breakTimerText}>
+                {String(Math.floor(breakElapsedSeconds / 3600)).padStart(2, '0')}:
+                {String(Math.floor((breakElapsedSeconds % 3600) / 60)).padStart(2, '0')}:
+                {String(breakElapsedSeconds % 60).padStart(2, '0')}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.finishBreakButton}
+              onPress={finishBreak}
+              disabled={isLoading}
+            >
+              <Text style={styles.finishBreakButtonText}>Finalizar descanso</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Sección de Fichaje Rápido */}
         <View style={styles.actionSection}>
           <Text style={styles.sectionTitle}>Fichaje Rápido</Text>
@@ -404,14 +687,18 @@ export default function FichajeScreen() {
                     </View>
                     <View style={styles.buttonContent}>
                       <Text style={styles.buttonTitle}>
-                        {isBreak ? 'Registrar Descanso' : `Fichar ${getEntryTypeLabel(actionType)}`}
+                        {isBreak ? 'Registrar Descanso' : `Fichar ${getNextEntryLabel(actionType)}`}
                       </Text>
                       <Text style={styles.buttonSubtitle}>
                         {isBreak
-                          ? '30 minutos automáticos'
-                          : actionType === 'ENTRADA' || actionType === 'ENTRADA_2'
+                          ? 'Pausar jornada laboral'
+                          : actionType === 'ENTRADA'
                             ? 'Iniciar jornada laboral'
-                            : 'Finalizar jornada laboral'}
+                            : actionType === 'ENTRADA_2'
+                              ? 'Iniciar segundo turno'
+                              : actionType === 'SALIDA'
+                                ? 'Finalizar primer turno'
+                                : 'Finalizar jornada laboral'}
                       </Text>
                     </View>
                   </>
@@ -451,7 +738,7 @@ export default function FichajeScreen() {
                   ]}
                 >
                   <Text style={[styles.lastEntryType, { color: entryColor, fontWeight: '600' }]}>
-                    {getEntryTypeLabel(entry.entry_type)}
+                    {getEntryLabel(entry, todayEntries)}
                   </Text>
                   <Text style={[styles.lastEntryTime, { color: '#666', fontWeight: 'bold' }]}>
                     {formatEntryTime(entry.clock_time)}
@@ -461,8 +748,29 @@ export default function FichajeScreen() {
             })}
           </View>
         ) : null}
+
+        {/* Resumen del día */}
+        {todayEntries.length > 0 && !isFetching && (
+          <View style={styles.summarySection}>
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryItemLabel}>Horas trabajadas</Text>
+                <Text style={styles.summaryItemValue}>
+                  {Math.floor(calculateWorkedHours(todayEntries) / 60)}h {calculateWorkedHours(todayEntries) % 60}m
+                </Text>
+              </View>
+              <View style={styles.summaryVerticalDivider} />
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryItemLabel}>Descanso</Text>
+                <Text style={styles.summaryItemValue}>
+                  {Math.floor(calculateBreakTime(todayEntries) / 60)}h {calculateBreakTime(todayEntries) % 60}m
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 }
 
@@ -480,22 +788,22 @@ const styles = StyleSheet.create({
   },
   clockSection: {
     backgroundColor: '#fff',
-    padding: 24,
-    paddingTop: 40,
+    padding: 16,
+    paddingTop: 20,
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
   dateText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#666',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   timeText: {
     fontSize: 48,
     fontWeight: 'bold',
     color: '#1a1a1a',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   statusContainer: {
     flexDirection: 'row',
@@ -518,27 +826,29 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   actionSection: {
-    padding: 20,
+    padding: 12,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1a1a1a',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 3,
     },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 5,
   },
   checkInButton: {
@@ -546,29 +856,29 @@ const styles = StyleSheet.create({
     borderLeftColor: '#4caf50',
   },
   buttonIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#e8f5e9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 20,
+    marginRight: 14,
   },
   iconText: {
-    fontSize: 32,
+    fontSize: 24,
     color: '#4caf50',
   },
   buttonContent: {
     flex: 1,
   },
   buttonTitle: {
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '700',
     color: '#1a1a1a',
-    marginBottom: 6,
+    marginBottom: 3,
   },
   buttonSubtitle: {
-    fontSize: 15,
+    fontSize: 13,
     color: '#666',
   },
   lastEntrySection: {
@@ -607,5 +917,89 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#2196f3',
+  },
+  breakTimerSection: {
+    backgroundColor: '#FFF3E0',
+    margin: 16,
+    marginTop: 0,
+    padding: 24,
+    borderRadius: 16,
+    borderLeftWidth: 6,
+    borderLeftColor: '#FF9800',
+    alignItems: 'center',
+  },
+  breakTimerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FF9800',
+    marginBottom: 16,
+  },
+  breakTimerDisplay: {
+    backgroundColor: '#fff',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  breakTimerText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FF9800',
+    fontVariant: ['tabular-nums'],
+  },
+  finishBreakButton: {
+    backgroundColor: '#f44336',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    width: '100%',
+    alignItems: 'center',
+  },
+  finishBreakButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  summarySection: {
+    margin: 12,
+    marginTop: 0,
+  },
+  summaryCard: {
+    flexDirection: 'row',
+    backgroundColor: '#4A90E2',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  summaryItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  summaryItemLabel: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontWeight: '600',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  summaryItemValue: {
+    fontSize: 28,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  summaryVerticalDivider: {
+    width: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    marginHorizontal: 16,
   },
 });
