@@ -1,11 +1,15 @@
 import { Colors } from '@/constants/Colors';
-import React, { useState } from 'react';
+import { clockService } from '@/services/clock.service';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function CalendarioScreen() {
     const [selectedWeek, setSelectedWeek] = useState(getCurrentWeek());
     const [selectedMonth, setSelectedMonth] = useState(new Date());
     const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+    const [workedHours, setWorkedHours] = useState<{ [key: string]: { hours: string; minutes: string } }>({});
+    const [isLoading, setIsLoading] = useState(true);
 
     // Obtener la semana actual
     function getCurrentWeek() {
@@ -95,19 +99,41 @@ export default function CalendarioScreen() {
         }
     };
 
-    // Datos de ejemplo (esto vendría del backend)
-    const workedHours: { [key: string]: { hours: string; minutes: string } } = {
-        '2026-01-13': { hours: '0h', minutes: '0m' },
-        '2026-01-14': { hours: '0h', minutes: '0m' },
-        '2026-01-15': { hours: '0h', minutes: '0m' },
-        '2026-01-16': { hours: '0h', minutes: '0m' },
-        '2026-01-17': { hours: '5h', minutes: '30m' },
-        '2026-01-18': { hours: '0h', minutes: '0m' },
-        '2026-01-19': { hours: '0h', minutes: '0m' },
-        '2026-01-20': { hours: '8h', minutes: '15m' },
-        '2026-01-21': { hours: '7h', minutes: '45m' },
-        '2026-01-22': { hours: '8h', minutes: '0m' },
+    // Cargar datos when pantalla está en foco o cambia el rango
+    useFocusEffect(
+        useCallback(() => {
+            loadWorkedHours();
+        }, [selectedWeek, selectedMonth, viewMode])
+    );
+
+    const loadWorkedHours = async () => {
+        setIsLoading(true);
+        try {
+            let startDate: string;
+            let endDate: string;
+
+            if (viewMode === 'week') {
+                const weekDays = getWeekDays();
+                startDate = formatDateKey(weekDays[0]);
+                endDate = formatDateKey(weekDays[6]);
+            } else {
+                const year = selectedMonth.getFullYear();
+                const month = selectedMonth.getMonth();
+                startDate = `${year}-${(month + 1).toString().padStart(2, '0')}-01`;
+                const lastDay = new Date(year, month + 1, 0).getDate();
+                endDate = `${year}-${(month + 1).toString().padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`;
+            }
+
+            const hours = await clockService.getRealWorkedHoursByDate(startDate, endDate);
+            setWorkedHours(hours);
+        } catch (error) {
+            console.error('Error loading worked hours:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
+
+
 
     const formatDateKey = (date: Date) => {
         const year = date.getFullYear();
@@ -126,6 +152,19 @@ export default function CalendarioScreen() {
     const getHoursForDate = (date: Date) => {
         const key = formatDateKey(date);
         return workedHours[key];
+    };
+
+    // Calcular total de horas
+    const calculateTotal = (): string => {
+        let totalMinutes = 0;
+        Object.values(workedHours).forEach(day => {
+            const hours = parseInt(day.hours.replace('h', '')) || 0;
+            const minutes = parseInt(day.minutes.replace('m', '')) || 0;
+            totalMinutes += (hours * 60) + minutes;
+        });
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     };
 
     const weekDays = getWeekDays();
@@ -227,7 +266,7 @@ export default function CalendarioScreen() {
                             </View>
                             <View style={[styles.tableCell, { flex: 1.5 }]} />
                             <View style={styles.tableCell}>
-                                <Text style={styles.tableTotalValue}>05:30</Text>
+                                <Text style={styles.tableTotalValue}>{calculateTotal()}</Text>
                             </View>
                         </View>
                     </View>
@@ -284,7 +323,7 @@ export default function CalendarioScreen() {
                         {/* Total mensual */}
                         <View style={styles.monthTotal}>
                             <Text style={styles.monthTotalLabel}>TOTAL DEL MES</Text>
-                            <Text style={styles.monthTotalValue}>29:30</Text>
+                            <Text style={styles.monthTotalValue}>{calculateTotal()}</Text>
                         </View>
                     </View>
                 </ScrollView>

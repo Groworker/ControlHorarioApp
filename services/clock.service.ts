@@ -188,4 +188,79 @@ export const clockService = {
             formatted: `${hours}h ${minutes}m`,
         };
     },
+
+    /**
+     * Obtener horas reales trabajadas por fecha (salida - entrada - descanso)
+     * Formato para el calendario
+     */
+    async getRealWorkedHoursByDate(startDate: string, endDate: string): Promise<DailyHours> {
+        try {
+            const user = await authService.getCurrentUser();
+            if (!user) return {};
+
+            // Convertir strings a Date
+            const from = new Date(startDate);
+            const to = new Date(endDate);
+            to.setHours(23, 59, 59, 999); // Incluir todo el día final
+
+            const result = await this.getMyEntries(from, to);
+            if (!result.success || !result.entries) return {};
+
+            const entries = result.entries;
+            const dailyHours: DailyHours = {};
+
+            // Agrupar por día
+            const entriesByDate = entries.reduce((acc: { [key: string]: ClockEntry[] }, entry: ClockEntry) => {
+                const date = entry.clock_time.split('T')[0];
+                if (!acc[date]) acc[date] = [];
+                acc[date].push(entry);
+                return acc;
+            }, {});
+
+            // Calcular horas por cada día
+            Object.keys(entriesByDate).forEach(date => {
+                const dayEntries = entriesByDate[date].sort(
+                    (a: ClockEntry, b: ClockEntry) => new Date(a.clock_time).getTime() - new Date(b.clock_time).getTime()
+                );
+
+                let totalWorkedMinutes = 0;
+                let totalBreakMinutes = 0;
+
+                // Calcular pares de ENTRADA-SALIDA
+                const entradas = dayEntries.filter((e: ClockEntry) => e.entry_type === 'ENTRADA' || e.entry_type === 'ENTRADA_2');
+                const salidas = dayEntries.filter((e: ClockEntry) => e.entry_type === 'SALIDA' || e.entry_type === 'SALIDA_2');
+                const descansos = dayEntries.filter((e: ClockEntry) => e.entry_type === 'DESCANSO');
+
+                // Calcular tiempo de trabajo total
+                const pairs = Math.min(entradas.length, salidas.length);
+                for (let i = 0; i < pairs; i++) {
+                    const entradaTime = new Date(entradas[i].clock_time).getTime();
+                    const salidaTime = new Date(salidas[i].clock_time).getTime();
+                    totalWorkedMinutes += (salidaTime - entradaTime) / (1000 * 60);
+                }
+
+                // Calcular tiempo de descanso
+                for (let i = 0; i < descansos.length - 1; i += 2) {
+                    const start = new Date(descansos[i].clock_time).getTime();
+                    const end = new Date(descansos[i + 1].clock_time).getTime();
+                    totalBreakMinutes += (end - start) / (1000 * 60);
+                }
+
+                // Horas reales = trabajo total - descansos
+                const realMinutes = Math.max(0, Math.floor(totalWorkedMinutes - totalBreakMinutes));
+                const hours = Math.floor(realMinutes / 60);
+                const minutes = Math.floor(realMinutes % 60);
+
+                dailyHours[date] = {
+                    hours: `${hours}h`,
+                    minutes: `${minutes}m`,
+                };
+            });
+
+            return dailyHours;
+        } catch (error) {
+            console.error('Error calculating real worked hours:', error);
+            return {};
+        }
+    },
 };
