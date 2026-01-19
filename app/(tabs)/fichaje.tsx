@@ -1,8 +1,8 @@
 import type { ClockEntry } from '@/lib/supabase';
 import { clockService, type EntryType } from '@/services/clock.service';
+import { notificationService } from '@/services/notification.service';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
-import * as Notifications from 'expo-notifications';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -16,6 +16,8 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+
 
 export default function FichajeScreen() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -54,8 +56,10 @@ export default function FichajeScreen() {
 
   // Configurar notificaciones
   useEffect(() => {
+    if (!notificationService.isSupported()) return;
+
     // Configurar cómo se manejan las notificaciones
-    Notifications.setNotificationHandler({
+    notificationService.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
         shouldPlaySound: true,
@@ -70,11 +74,13 @@ export default function FichajeScreen() {
   }, []);
 
   const registerForPushNotificationsAsync = async () => {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    if (!notificationService.isSupported()) return;
+
+    const { status: existingStatus } = await notificationService.getPermissionsAsync();
     let finalStatus = existingStatus;
 
     if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
+      const { status } = await notificationService.requestPermissionsAsync();
       finalStatus = status;
     }
 
@@ -84,22 +90,27 @@ export default function FichajeScreen() {
   };
 
   const scheduleBreakNotification = async () => {
+    if (!notificationService.isSupported()) {
+      console.log('Notificaciones no soportadas en Expo Go (Android)');
+      return;
+    }
+
     try {
-      // Programar notificación para 20 segundos en el futuro
-      await Notifications.scheduleNotificationAsync({
+      // Programar notificación para 30 minutos en el futuro
+      await notificationService.scheduleNotificationAsync({
         content: {
           title: "⏰ Descanso completado",
           body: "Has cumplido tus 30 minutos de descanso. ¡Es hora de volver al trabajo!",
           sound: true,
         },
         trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: 1800, // 20 segundos para pruebas
+          type: notificationService.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 1800, // 30 minutos
           repeats: false,
         },
       });
 
-      console.log('Notificación programada para 20 segundos');
+      console.log('Notificación programada para 30 minutos');
     } catch (error) {
       console.error('Error programando notificación:', error);
     }
@@ -321,7 +332,9 @@ export default function FichajeScreen() {
 
           Alert.alert(
             '¡Descanso iniciado!',
-            'Recibirás una notificación en 20 segundos.',
+            notificationService.isSupported()
+              ? 'Recibirás una notificación en 30 minutos.'
+              : 'Tu descanso ha comenzado. Las notificaciones requieren un development build.',
             [{ text: 'OK' }]
           );
 
