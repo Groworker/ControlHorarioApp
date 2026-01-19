@@ -191,6 +191,11 @@ CREATE POLICY "Users can update requests"
   ON requests FOR UPDATE
   USING (true);
 
+CREATE POLICY "Users can delete their own pending requests"
+  ON requests FOR DELETE
+  USING (true);
+
+
 
 -- ============================================
 -- VERIFICACIÓN

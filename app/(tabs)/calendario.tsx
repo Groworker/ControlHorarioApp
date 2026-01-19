@@ -291,7 +291,7 @@ export default function CalendarioScreen() {
                             {monthDays.map((dayInfo, index) => {
                                 const hours = getHoursForDate(dayInfo.date);
                                 const isCurrentDay = isToday(dayInfo.date);
-                                const hasHours = hours && hours.hours !== '0h';
+                                const hasHours = hours && (hours.hours !== '0h' || (hours.minutes && hours.minutes !== '0m'));
 
                                 return (
                                     <TouchableOpacity
@@ -311,8 +311,13 @@ export default function CalendarioScreen() {
                                             {dayInfo.date.getDate()}
                                         </Text>
                                         {hasHours && dayInfo.isCurrentMonth && (
-                                            <Text style={styles.calendarDayHours}>
-                                                {hours.hours}
+                                            <Text style={[
+                                                styles.calendarDayHours,
+                                                isCurrentDay && styles.calendarDayHoursToday
+                                            ]}>
+                                                {hours.minutes && hours.minutes !== '0m'
+                                                    ? `${hours.hours} ${hours.minutes}`
+                                                    : hours.hours}
                                             </Text>
                                         )}
                                     </TouchableOpacity>
@@ -554,6 +559,9 @@ const styles = StyleSheet.create({
         fontSize: 10,
         color: Colors.light.primary,
         fontWeight: '600',
+    },
+    calendarDayHoursToday: {
+        color: '#FFFFFF',
     },
     monthTotal: {
         marginTop: 16,

@@ -1,22 +1,31 @@
 import { Colors } from '@/constants/Colors';
+import { requestService, type EntryType } from '@/services/request.service';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
-import React, { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-type RequestType = 'ENTRADA' | 'SALIDA' | 'ENTRADA_2' | 'SALIDA_2' | 'DESCANSO';
-
-interface Request {
+interface RequestDisplay {
     id: string;
     date: string;
-    type: RequestType;
+    type: EntryType;
     time: string;
     reason: string;
     status: 'pending' | 'approved' | 'rejected';
 }
 
 export default function SolicitudesScreen() {
+    const [isLoading, setIsLoading] = useState(false);
+    const [isFetching, setIsFetching] = useState(true);
+
+    // Estados para selección múltiple
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+    // Estados para edición
+    const [editingRequest, setEditingRequest] = useState<RequestDisplay | null>(null);
     const [showNewRequest, setShowNewRequest] = useState(false);
-    const [selectedType, setSelectedType] = useState<RequestType>('ENTRADA');
+    const [selectedType, setSelectedType] = useState<EntryType>('ENTRADA');
 
     // Fecha actual como default
     const today = new Date();
@@ -61,26 +70,55 @@ export default function SolicitudesScreen() {
         }
     }, [datePickerVisible]);
 
-    const [requests, setRequests] = useState<Request[]>([
-        {
-            id: '1',
-            date: '17/01/2026',
-            type: 'ENTRADA',
-            time: '09:00',
-            reason: 'Olvidé fichar',
-            status: 'pending'
-        },
-        {
-            id: '2',
-            date: '16/01/2026',
-            type: 'SALIDA',
-            time: '18:00',
-            reason: 'Problema técnico',
-            status: 'approved'
-        },
-    ]);
+    const [requests, setRequests] = useState<RequestDisplay[]>([]);
 
-    const typeLabels: Record<RequestType, string> = {
+    // Cargar solicitudes cuando la pantalla está en foco
+    useFocusEffect(
+        useCallback(() => {
+            loadRequests();
+        }, [])
+    );
+
+    const loadRequests = async () => {
+        setIsFetching(true);
+        try {
+            const result = await requestService.getMyRequests();
+            if (result.success && result.requests) {
+                // Convertir requests de DB a formato de display
+                const displayRequests: RequestDisplay[] = result.requests.map(req => {
+                    const datetime = new Date(req.requested_datetime);
+                    return {
+                        id: req.id,
+                        date: formatDateDisplay(datetime),
+                        type: req.entry_type,
+                        time: formatTimeDisplay(datetime),
+                        reason: req.reason,
+                        status: req.status,
+                    };
+                });
+                setRequests(displayRequests);
+            }
+        } catch (error) {
+            console.error('Error loading requests:', error);
+        } finally {
+            setIsFetching(false);
+        }
+    };
+
+    const formatDateDisplay = (date: Date): string => {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
+
+    const formatTimeDisplay = (date: Date): string => {
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+    };
+
+    const typeLabels: Record<EntryType, string> = {
         'ENTRADA': 'Entrada',
         'SALIDA': 'Salida',
         'ENTRADA_2': 'Entrada T2',
@@ -133,28 +171,244 @@ export default function SolicitudesScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     };
 
-    const submitRequest = () => {
+    const submitRequest = async () => {
         if (!reason.trim()) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert('Error', 'Por favor ingresa un motivo para la solicitud');
             return;
         }
 
-        const formattedDate = `${selectedDay.toString().padStart(2, '0')}/${selectedMonth.toString().padStart(2, '0')}/${selectedYear}`;
-        const time = `${selectedHour.toString().padStart(2, '0')}:${selectedMin.toString().padStart(2, '0')}`;
+        setIsLoading(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        const newRequest: Request = {
-            id: Date.now().toString(),
-            date: formattedDate,
-            type: selectedType,
-            time,
-            reason: reason.trim(),
-            status: 'pending',
-        };
+        try {
+            // Construir fecha y hora en formato ISO
+            const requestedDate = new Date(
+                selectedYear,
+                selectedMonth - 1,
+                selectedDay,
+                selectedHour,
+                selectedMin
+            );
 
-        setRequests([newRequest, ...requests]);
-        setShowNewRequest(false);
-        setReason('');
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            const result = await requestService.createRequest(
+                selectedType,
+                requestedDate,
+                reason.trim()
+            );
+
+            if (result.success) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                setShowNewRequest(false);
+                setReason('');
+
+                // Recargar solicitudes
+                await loadRequests();
+
+                Alert.alert(
+                    '¡Solicitud enviada!',
+                    'Tu solicitud ha sido enviada y está pendiente de aprobación.',
+                    [{ text: 'OK' }]
+                );
+            } else {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                Alert.alert('Error', result.error || 'No se pudo crear la solicitud');
+            }
+        } catch (error) {
+            console.error('Error submitting request:', error);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert('Error', 'Ocurrió un error al enviar la solicitud');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDeleteRequest = (requestId: string, status: 'pending' | 'approved' | 'rejected') => {
+        // Solo permitir eliminar solicitudes pendientes
+        if (status !== 'pending') {
+            Alert.alert(
+                'No se puede eliminar',
+                'Solo puedes eliminar solicitudes pendientes.',
+                [{ text: 'OK' }]
+            );
+            return;
+        }
+
+        Alert.alert(
+            'Eliminar Solicitud',
+            '¿Estás seguro de que quieres eliminar esta solicitud?',
+            [
+                {
+                    text: 'Cancelar',
+                    style: 'cancel'
+                },
+                {
+                    text: 'Eliminar',
+                    style: 'destructive',
+                    onPress: async () => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+                        console.log('Deleting request:', requestId);
+                        const result = await requestService.deleteRequest(requestId);
+                        console.log('Delete result:', result);
+
+                        if (result.success) {
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                            // Actualización optimista: remover de la lista inmediatamente
+                            setRequests(prevRequests => prevRequests.filter(req => req.id !== requestId));
+
+                            // Recargar solicitudes para asegurar sincronización
+                            await loadRequests();
+                            console.log('Requests reloaded after delete');
+                        } else {
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                            Alert.alert('Error', result.error || 'No se pudo eliminar la solicitud');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const handleLongPress = (requestId: string, status: 'pending' | 'approved' | 'rejected') => {
+        // Solo permitir selección múltiple de solicitudes pendientes
+        if (status !== 'pending') {
+            handleDeleteRequest(requestId, status);
+            return;
+        }
+
+        // Entrar en modo selección
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setIsSelectionMode(true);
+        setSelectedIds([requestId]);
+    };
+
+    const toggleSelection = (requestId: string) => {
+        if (selectedIds.includes(requestId)) {
+            const newSelected = selectedIds.filter(id => id !== requestId);
+            setSelectedIds(newSelected);
+            // Salir del modo selección si no hay nada seleccionado
+            if (newSelected.length === 0) {
+                setIsSelectionMode(false);
+            }
+        } else {
+            setSelectedIds([...selectedIds, requestId]);
+        }
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    };
+
+    const cancelSelection = () => {
+        setIsSelectionMode(false);
+        setSelectedIds([]);
+    };
+
+    const deleteSelected = async () => {
+        if (selectedIds.length === 0) return;
+
+        Alert.alert(
+            'Eliminar Solicitudes',
+            `¿Estás seguro de que quieres eliminar ${selectedIds.length} solicitud(es)?`,
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                    text: 'Eliminar',
+                    style: 'destructive',
+                    onPress: async () => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+                        console.log('Bulk deleting requests:', selectedIds);
+                        const result = await requestService.bulkDeleteRequests(selectedIds);
+                        console.log('Bulk delete result:', result);
+
+                        if (result.success) {
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                            // Actualización optimista: remover de la lista inmediatamente
+                            setRequests(prevRequests => prevRequests.filter(req => !selectedIds.includes(req.id)));
+                            setIsSelectionMode(false);
+                            setSelectedIds([]);
+
+                            // Recargar solicitudes para asegurar sincronización
+                            await loadRequests();
+                            console.log('Requests reloaded after bulk delete');
+                        } else {
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                            Alert.alert('Error', result.error || 'No se pudieron eliminar las solicitudes');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const startEdit = (request: RequestDisplay) => {
+        // Parsear la fecha y hora del display format
+        const [day, month, year] = request.date.split('/').map(Number);
+        const [hours, minutes] = request.time.split(':').map(Number);
+
+        setSelectedType(request.type);
+        setSelectedDay(day);
+        setSelectedMonth(month);
+        setSelectedYear(year);
+        setSelectedHour(hours);
+        setSelectedMin(minutes);
+        setReason(request.reason);
+        setEditingRequest(request);
+        setShowNewRequest(true);
+    };
+
+    const submitEdit = async () => {
+        if (!reason.trim() || !editingRequest) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert('Error', 'Por favor ingresa un motivo para la solicitud');
+            return;
+        }
+
+        setIsLoading(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+        try {
+            const requestedDate = new Date(
+                selectedYear,
+                selectedMonth - 1,
+                selectedDay,
+                selectedHour,
+                selectedMin
+            );
+
+            const result = await requestService.updateRequest(
+                editingRequest.id,
+                {
+                    entry_type: selectedType,
+                    requested_datetime: requestedDate,
+                    reason: reason.trim()
+                }
+            );
+
+            if (result.success) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                setShowNewRequest(false);
+                setReason('');
+                setEditingRequest(null);
+                await loadRequests();
+
+                Alert.alert(
+                    '¡Solicitud actualizada!',
+                    'Tu solicitud ha sido actualizada correctamente.',
+                    [{ text: 'OK' }]
+                );
+            } else {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                Alert.alert('Error', result.error || 'No se pudo actualizar la solicitud');
+            }
+        } catch (error) {
+            console.error('Error updating request:', error);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert('Error', 'Ocurrió un error al actualizar la solicitud');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const pickerItems = pickerType === 'hour'
@@ -168,10 +422,14 @@ export default function SolicitudesScreen() {
                 style={styles.container}
             >
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => setShowNewRequest(false)}>
+                    <TouchableOpacity onPress={() => {
+                        setShowNewRequest(false);
+                        setEditingRequest(null);
+                        setReason('');
+                    }}>
                         <Text style={styles.backButton}>← Volver</Text>
                     </TouchableOpacity>
-                    <Text style={styles.title}>Nueva Solicitud</Text>
+                    <Text style={styles.title}>{editingRequest ? 'Editar Solicitud' : 'Nueva Solicitud'}</Text>
                     <View style={{ width: 20 }} />
                 </View>
 
@@ -279,11 +537,18 @@ export default function SolicitudesScreen() {
                     </View>
 
                     <TouchableOpacity
-                        style={styles.submitButton}
-                        onPress={submitRequest}
+                        style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+                        onPress={editingRequest ? submitEdit : submitRequest}
                         activeOpacity={0.8}
+                        disabled={isLoading}
                     >
-                        <Text style={styles.submitButtonText}>Enviar Solicitud</Text>
+                        {isLoading ? (
+                            <ActivityIndicator color="#FFFFFF" />
+                        ) : (
+                            <Text style={styles.submitButtonText}>
+                                {editingRequest ? 'Actualizar Solicitud' : 'Enviar Solicitud'}
+                            </Text>
+                        )}
                     </TouchableOpacity>
 
                     <View style={{ height: 40 }} />
@@ -439,37 +704,108 @@ export default function SolicitudesScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>Solicitudes</Text>
-                <TouchableOpacity
-                    style={styles.newButton}
-                    onPress={() => setShowNewRequest(true)}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.newButtonText}>+ Nueva</Text>
-                </TouchableOpacity>
+                {isSelectionMode ? (
+                    <>
+                        <TouchableOpacity onPress={cancelSelection} style={styles.headerButton}>
+                            <Text style={styles.cancelButton}>Cancelar</Text>
+                        </TouchableOpacity>
+                        <View style={styles.selectionTitleContainer}>
+                            <Text style={styles.selectionTitle}>{selectedIds.length} seleccionada(s)</Text>
+                        </View>
+                        <TouchableOpacity
+                            style={styles.deleteButton}
+                            onPress={deleteSelected}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={styles.deleteButtonText}>Eliminar</Text>
+                        </TouchableOpacity>
+                    </>
+                ) : (
+                    <>
+                        <Text style={styles.title}>Solicitudes</Text>
+                        <TouchableOpacity
+                            style={styles.newButton}
+                            onPress={() => setShowNewRequest(true)}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={styles.newButtonText}>+ Nueva</Text>
+                        </TouchableOpacity>
+                    </>
+                )}
             </View>
 
             <ScrollView style={styles.content}>
-                {requests.length === 0 ? (
+                {isFetching ? (
+                    <View style={styles.loadingState}>
+                        <ActivityIndicator size="large" color={Colors.light.primary} />
+                        <Text style={styles.loadingText}>Cargando solicitudes...</Text>
+                    </View>
+                ) : requests.length === 0 ? (
                     <View style={styles.emptyState}>
                         <Text style={styles.emptyText}>No hay solicitudes</Text>
                         <Text style={styles.emptySubtext}>Crea una nueva solicitud para registrar un fichaje olvidado</Text>
                     </View>
                 ) : (
-                    requests.map((request) => (
-                        <View key={request.id} style={styles.requestCard}>
-                            <View style={styles.requestHeader}>
-                                <View style={styles.requestInfo}>
-                                    <Text style={styles.requestType}>{typeLabels[request.type]}</Text>
-                                    <Text style={styles.requestDate}>{request.date} • {request.time}</Text>
+                    requests.map((request) => {
+                        const isSelected = selectedIds.includes(request.id);
+                        const isPending = request.status === 'pending';
+
+                        return (
+                            <TouchableOpacity
+                                key={request.id}
+                                style={[
+                                    styles.requestCard,
+                                    isSelected && styles.requestCardSelected
+                                ]}
+                                onPress={() => {
+                                    if (isSelectionMode) {
+                                        toggleSelection(request.id);
+                                    }
+                                }}
+                                onLongPress={() => handleLongPress(request.id, request.status)}
+                                activeOpacity={0.9}
+                                delayLongPress={500}
+                            >
+                                <View style={styles.requestCardContent}>
+                                    {/* Checkbox en modo selección */}
+                                    {isSelectionMode && isPending && (
+                                        <View style={styles.checkboxContainer}>
+                                            <View style={[
+                                                styles.checkboxInner,
+                                                isSelected && styles.checkboxSelected
+                                            ]}>
+                                                {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                                            </View>
+                                        </View>
+                                    )}
+
+                                    <View style={styles.requestContent}>
+                                        <View style={styles.requestHeader}>
+                                            <View style={styles.requestInfo}>
+                                                <Text style={styles.requestType}>{typeLabels[request.type]}</Text>
+                                                <Text style={styles.requestDate}>{request.date} • {request.time}</Text>
+                                            </View>
+                                            <View style={[styles.statusBadge, { backgroundColor: statusColors[request.status] }]}>
+                                                <Text style={styles.statusText}>{statusLabels[request.status]}</Text>
+                                            </View>
+                                        </View>
+                                        <Text style={styles.requestReason}>{request.reason}</Text>
+
+                                        {/* Botón de editar para solicitudes pendientes */}
+                                        {isPending && !isSelectionMode && (
+                                            <TouchableOpacity
+                                                style={styles.editButton}
+                                                onPress={() => startEdit(request)}
+                                                activeOpacity={0.7}
+                                            >
+                                                <Text style={styles.editButtonText}>✏️ Editar</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
                                 </View>
-                                <View style={[styles.statusBadge, { backgroundColor: statusColors[request.status] }]}>
-                                    <Text style={styles.statusText}>{statusLabels[request.status]}</Text>
-                                </View>
-                            </View>
-                            <Text style={styles.requestReason}>{request.reason}</Text>
-                        </View>
-                    ))
+                            </TouchableOpacity>
+                        );
+                    })
                 )}
             </ScrollView>
         </View>
@@ -484,13 +820,26 @@ const styles = StyleSheet.create({
     header: {
         backgroundColor: Colors.light.cardBackground,
         paddingVertical: 16,
-        paddingHorizontal: 24,
+        paddingHorizontal: 16,
         paddingTop: 83,
         borderBottomWidth: 1,
         borderBottomColor: Colors.light.border,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+    },
+    headerButton: {
+        paddingRight: 8,
+    },
+    selectionTitleContainer: {
+        flex: 1,
+        alignItems: 'center',
+        paddingHorizontal: 8,
+    },
+    selectionTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: Colors.light.text,
     },
     title: {
         fontSize: 28,
@@ -579,6 +928,78 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: Colors.light.text,
         lineHeight: 20,
+    },
+    deleteHint: {
+        fontSize: 11,
+        color: Colors.light.textSecondary,
+        fontStyle: 'italic',
+        marginTop: 8,
+        textAlign: 'center',
+    },
+    cancelButton: {
+        fontSize: 16,
+        color: Colors.light.primary,
+        fontWeight: '600',
+    },
+    deleteButton: {
+        backgroundColor: '#EF4444',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 8,
+    },
+    deleteButtonText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    requestCardSelected: {
+        backgroundColor: '#EFF6FF',
+        borderColor: Colors.light.primary,
+        borderWidth: 2,
+    },
+    requestCardContent: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        width: '100%',
+    },
+    checkboxContainer: {
+        paddingRight: 12,
+        paddingTop: 2,
+    },
+    checkboxInner: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: Colors.light.border,
+        backgroundColor: '#FFFFFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    checkboxSelected: {
+        backgroundColor: Colors.light.primary,
+        borderColor: Colors.light.primary,
+    },
+    checkmark: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    requestContent: {
+        flex: 1,
+    },
+    editButton: {
+        marginTop: 12,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        backgroundColor: '#F3F4F6',
+        borderRadius: 8,
+        alignSelf: 'flex-start',
+    },
+    editButtonText: {
+        fontSize: 14,
+        color: Colors.light.primary,
+        fontWeight: '600',
     },
     // Form
     formGroup: {
@@ -696,6 +1117,20 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: 'center',
         marginTop: 8,
+    },
+    submitButtonDisabled: {
+        opacity: 0.6,
+    },
+    loadingState: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 60,
+    },
+    loadingText: {
+        fontSize: 16,
+        color: Colors.light.textSecondary,
+        marginTop: 12,
     },
     submitButtonText: {
         color: '#FFFFFF',
