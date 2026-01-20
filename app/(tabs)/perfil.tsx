@@ -1,10 +1,12 @@
 import { Colors } from '@/constants/Colors';
+import { profilePictureService } from '@/services/profile-picture.service';
 import { userService } from '@/services/user.service';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { CountryCode } from 'react-native-country-picker-modal';
 
 type EditField = 'name' | 'birth_date' | 'email' | 'phone' | 'department' | null;
@@ -34,10 +36,22 @@ const JOB_POSITIONS = [
     'Housekeeping',
 ];
 
+// Languages
+const LANGUAGES = [
+    { code: 'es', name: 'Español', flag: '🇪🇸' },
+    { code: 'en', name: 'English', flag: '🇬🇧' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷' },
+    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+];
+
 export default function PerfilScreen() {
+    const { t, i18n } = useTranslation();
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showAvatarOptions, setShowAvatarOptions] = useState(false);
     const [editingField, setEditingField] = useState<EditField>(null);
     const [editValue, setEditValue] = useState('');
 
@@ -51,6 +65,9 @@ export default function PerfilScreen() {
     const [showJobPicker, setShowJobPicker] = useState(false);
     const [selectedJobPosition, setSelectedJobPosition] = useState('');
 
+    // Language picker
+    const [showLanguagePicker, setShowLanguagePicker] = useState(false);
+
     // User profile data
     const [userProfile, setUserProfile] = useState<{
         full_name: string;
@@ -60,6 +77,7 @@ export default function PerfilScreen() {
         phone_extension: string;
         birth_date: string;
         department: string;
+        avatar_url: string;
     } | null>(null);
 
     // Date picker states
@@ -87,6 +105,7 @@ export default function PerfilScreen() {
                     phone_extension: user.phone_extension || '',
                     birth_date: user.birth_date || '',
                     department: user.department || '',
+                    avatar_url: user.avatar_url || '',
                 });
 
                 // Pre-fill form fields
@@ -188,6 +207,7 @@ export default function PerfilScreen() {
                     phone_extension: result.user.phone_extension || '',
                     birth_date: result.user.birth_date || '',
                     department: result.user.department || '',
+                    avatar_url: result.user.avatar_url || '',
                 });
                 setShowEditModal(false);
                 setEditingField(null);
@@ -312,6 +332,42 @@ export default function PerfilScreen() {
         return edad;
     };
 
+    const handleAvatarUpload = async (source: 'gallery' | 'camera') => {
+        setShowAvatarOptions(false);
+        setIsUploadingAvatar(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+        try {
+            const pickResult = source === 'gallery'
+                ? await profilePictureService.pickImageFromGallery()
+                : await profilePictureService.pickImageFromCamera();
+
+            if (!pickResult.success || !pickResult.uri) {
+                if (pickResult.error !== 'Selección cancelada' && pickResult.error !== 'Captura cancelada') {
+                    Alert.alert('Error', pickResult.error || 'No se pudo seleccionar la imagen');
+                }
+                setIsUploadingAvatar(false);
+                return;
+            }
+
+            const uploadResult = await profilePictureService.uploadProfilePicture(pickResult.uri);
+
+            if (uploadResult.success && uploadResult.avatarUrl) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                setUserProfile(prev => prev ? { ...prev, avatar_url: uploadResult.avatarUrl! } : null);
+            } else {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                Alert.alert('Error', uploadResult.error || 'No se pudo subir la imagen');
+            }
+        } catch (error) {
+            console.error('Error uploading avatar:', error);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert('Error', 'Ocurrió un error al procesar la imagen');
+        } finally {
+            setIsUploadingAvatar(false);
+        }
+    };
+
     const formatDateDisplay = (dateString: string) => {
         if (!dateString) return 'No especificado';
         const date = new Date(dateString);
@@ -404,9 +460,28 @@ export default function PerfilScreen() {
                 {/* Foto y Nombre */}
                 <View style={styles.profileSection}>
                     <View style={styles.avatarContainer}>
-                        <View style={styles.avatarPlaceholder}>
-                            <Ionicons name="person" size={60} color={Colors.light.primary} />
-                        </View>
+                        <TouchableOpacity
+                            onPress={() => setShowAvatarOptions(true)}
+                            activeOpacity={0.8}
+                        >
+                            {userProfile.avatar_url ? (
+                                <Image
+                                    source={{ uri: userProfile.avatar_url }}
+                                    style={styles.avatarImage}
+                                />
+                            ) : (
+                                <View style={styles.avatarPlaceholder}>
+                                    <Ionicons name="person" size={60} color={Colors.light.primary} />
+                                </View>
+                            )}
+                            <View style={styles.cameraButton}>
+                                {isUploadingAvatar ? (
+                                    <ActivityIndicator size="small" color="#FFFFFF" />
+                                ) : (
+                                    <Ionicons name="camera" size={20} color="#FFFFFF" />
+                                )}
+                            </View>
+                        </TouchableOpacity>
                     </View>
                     <Text style={styles.nombre}>{userProfile.full_name}</Text>
                     {userProfile.department && (
@@ -777,6 +852,43 @@ export default function PerfilScreen() {
                     </View>
                 </View>
             </Modal>
+
+            {/* Avatar Options Modal */}
+            <Modal
+                visible={showAvatarOptions}
+                animationType="fade"
+                transparent
+                onRequestClose={() => setShowAvatarOptions(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Foto de Perfil</Text>
+
+                        <TouchableOpacity
+                            style={styles.avatarOption}
+                            onPress={() => handleAvatarUpload('gallery')}
+                        >
+                            <Ionicons name="images-outline" size={24} color={Colors.light.primary} />
+                            <Text style={styles.avatarOptionText}>Seleccionar desde Galería</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.avatarOption}
+                            onPress={() => handleAvatarUpload('camera')}
+                        >
+                            <Ionicons name="camera-outline" size={24} color={Colors.light.primary} />
+                            <Text style={styles.avatarOptionText}>Tomar Foto</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.modalButton, styles.cancelButton, { marginTop: 12 }]}
+                            onPress={() => setShowAvatarOptions(false)}
+                        >
+                            <Text style={styles.cancelButtonText}>Cancelar</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </>
     );
 }
@@ -833,6 +945,14 @@ const styles = StyleSheet.create({
     },
     avatarContainer: {
         marginBottom: 16,
+        position: 'relative',
+    },
+    avatarImage: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        borderWidth: 4,
+        borderColor: Colors.light.primary,
     },
     avatarPlaceholder: {
         width: 120,
@@ -843,6 +963,33 @@ const styles = StyleSheet.create({
         borderColor: Colors.light.primary,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    cameraButton: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: Colors.light.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 3,
+        borderColor: Colors.light.cardBackground,
+    },
+    avatarOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 8,
+        backgroundColor: '#EFF6FF',
+        marginBottom: 12,
+        gap: 12,
+    },
+    avatarOptionText: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: Colors.light.text,
     },
     nombre: {
         fontSize: 24,

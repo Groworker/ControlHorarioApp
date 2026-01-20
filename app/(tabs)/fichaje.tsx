@@ -4,6 +4,7 @@ import { notificationService } from '@/services/notification.service';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
@@ -20,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 export default function FichajeScreen() {
+  const { t } = useTranslation();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [lastEntry, setLastEntry] = useState<ClockEntry | null>(null);
   const [todayEntries, setTodayEntries] = useState<ClockEntry[]>([]);
@@ -216,27 +218,27 @@ export default function FichajeScreen() {
     // Si es SALIDA o SALIDA_2, verificar si tuvo descanso EN ESE TURNO
     if ((entryType === 'SALIDA' || entryType === 'SALIDA_2') && !hasBreakInCurrentShift(todayEntries, entryType)) {
       // Preguntar si tuvo descanso
-      const turno = entryType === 'SALIDA' ? 'primer turno' : 'segundo turno';
+      const shift = entryType === 'SALIDA' ? t('fichaje.alerts.firstShift') : t('fichaje.alerts.secondShift');
       Alert.alert(
-        'Descanso',
-        `¿Has realizado descanso de 30 minutos en tu ${turno}?`,
+        t('fichaje.break'),
+        t('fichaje.alerts.breakQuestion', { shift }),
         [
           {
-            text: 'Sí',
+            text: t('common.yes'),
             onPress: async () => {
               // Registrar descanso automáticamente
               await registerBreakAndExit(entryType, true);
             }
           },
           {
-            text: 'No',
+            text: t('common.no'),
             onPress: async () => {
               // Añadir 30min a la hora de salida
               await registerBreakAndExit(entryType, false);
             }
           },
           {
-            text: 'Cancelar',
+            text: t('common.cancel'),
             style: 'cancel'
           }
         ]
@@ -266,13 +268,13 @@ export default function FichajeScreen() {
           await loadTodayEntries();
 
           Alert.alert(
-            '¡Fichaje registrado!',
-            'Se ha registrado tu descanso y salida correctamente',
+            t('fichaje.alerts.clockRegistered'),
+            t('fichaje.alerts.breakRecorded'),
             [{ text: 'OK' }]
           );
         } else {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          Alert.alert('Error', result.error || 'No se pudo registrar el fichaje');
+          Alert.alert(t('common.error'), result.error || t('errors.saveFailed'));
         }
       } else {
         // NO tuvo descanso: registrar descanso obligatorio + salida con +30min
@@ -291,20 +293,21 @@ export default function FichajeScreen() {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           await loadTodayEntries();
 
+          const time = `${exitTime.getHours().toString().padStart(2, '0')}:${exitTime.getMinutes().toString().padStart(2, '0')}`;
           Alert.alert(
-            '¡Fichaje registrado!',
-            `Se ha registrado descanso de 30min y ${getNextEntryLabel(exitType)} a las ${exitTime.getHours().toString().padStart(2, '0')}:${exitTime.getMinutes().toString().padStart(2, '0')}`,
+            t('fichaje.alerts.clockRegistered'),
+            t('fichaje.alerts.breakAndExit', { exitType: getNextEntryLabel(exitType), time }),
             [{ text: 'OK' }]
           );
         } else {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          Alert.alert('Error', result.error || 'No se pudo registrar el fichaje');
+          Alert.alert(t('common.error'), result.error || t('errors.saveFailed'));
         }
       }
     } catch (error) {
       console.error('Error en fichaje con descanso:', error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Error', 'Ocurrió un error al registrar el fichaje');
+      Alert.alert(t('common.error'), t('errors.saveFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -331,17 +334,17 @@ export default function FichajeScreen() {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
           Alert.alert(
-            '¡Descanso iniciado!',
+            t('fichaje.alerts.breakStarted'),
             notificationService.isSupported()
-              ? 'Recibirás una notificación en 30 minutos.'
-              : 'Tu descanso ha comenzado. Las notificaciones requieren un development build.',
+              ? t('fichaje.alerts.notificationIn30')
+              : t('fichaje.alerts.notificationRequiresBuild'),
             [{ text: 'OK' }]
           );
 
           await loadTodayEntries();
         } else {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          Alert.alert('Error', result.error || 'No se pudo iniciar el descanso');
+          Alert.alert(t('common.error'), result.error || t('errors.saveFailed'));
         }
       } else {
         // Fichaje normal (ENTRADA/SALIDA)
@@ -353,19 +356,19 @@ export default function FichajeScreen() {
           await loadTodayEntries();
 
           Alert.alert(
-            '¡Fichaje registrado!',
+            t('fichaje.alerts.clockRegistered'),
             `${getNextEntryLabel(entryType)} registrada correctamente`,
             [{ text: 'OK' }]
           );
         } else {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          Alert.alert('Error', result.error || 'No se pudo registrar el fichaje');
+          Alert.alert(t('common.error'), result.error || t('errors.saveFailed'));
         }
       }
     } catch (error) {
       console.error('Error registrando fichaje:', error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Error', 'Ocurrió un error al registrar el fichaje');
+      Alert.alert(t('common.error'), t('errors.saveFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -393,18 +396,18 @@ export default function FichajeScreen() {
         const seconds = breakElapsedSeconds % 60;
 
         Alert.alert(
-          '¡Descanso finalizado!',
-          `Duración total: ${minutes}m ${seconds}s`,
+          t('fichaje.alerts.breakFinished'),
+          t('fichaje.alerts.duration', { minutes, seconds }),
           [{ text: 'OK' }]
         );
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        Alert.alert('Error', result.error || 'No se pudo finalizar el descanso');
+        Alert.alert(t('common.error'), result.error || t('errors.saveFailed'));
       }
     } catch (error) {
       console.error('Error finalizando descanso:', error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Error', 'Ocurrió un error al finalizar el descanso');
+      Alert.alert(t('common.error'), t('errors.saveFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -628,12 +631,12 @@ export default function FichajeScreen() {
           {isFetching ? (
             <View style={styles.statusContainer}>
               <ActivityIndicator size="small" color="#4caf50" />
-              <Text style={[styles.statusText, { marginLeft: 8 }]}>Cargando...</Text>
+              <Text style={[styles.statusText, { marginLeft: 8 }]}>{t('fichaje.loading')}</Text>
             </View>
           ) : (
             <View style={styles.statusContainer}>
               <View style={styles.statusDot} />
-              <Text style={styles.statusText}>Listo para fichar</Text>
+              <Text style={styles.statusText}>{t('fichaje.readyToClock')}</Text>
             </View>
           )}
         </View>
@@ -641,7 +644,7 @@ export default function FichajeScreen() {
         {/* Contador del Descanso Activo */}
         {isOnBreak && (
           <View style={styles.breakTimerSection}>
-            <Text style={styles.breakTimerTitle}>Descanso en curso</Text>
+            <Text style={styles.breakTimerTitle}>{t('fichaje.breakInProgress')}</Text>
             <View style={styles.breakTimerDisplay}>
               <Text style={styles.breakTimerText}>
                 {String(Math.floor(breakElapsedSeconds / 3600)).padStart(2, '0')}:
@@ -654,14 +657,14 @@ export default function FichajeScreen() {
               onPress={finishBreak}
               disabled={isLoading}
             >
-              <Text style={styles.finishBreakButtonText}>Finalizar descanso</Text>
+              <Text style={styles.finishBreakButtonText}>{t('fichaje.finishBreak')}</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* Sección de Fichaje Rápido */}
         <View style={styles.actionSection}>
-          <Text style={styles.sectionTitle}>Fichaje Rápido</Text>
+          <Text style={styles.sectionTitle}>{t('fichaje.quickClock')}</Text>
 
           {/* Botones dinámicos según acciones disponibles */}
           {getAvailableActions().map((actionType, index) => {
@@ -686,7 +689,7 @@ export default function FichajeScreen() {
                       <ActivityIndicator size="large" color={buttonColor} />
                     </View>
                     <View style={styles.buttonContent}>
-                      <Text style={styles.buttonTitle}>Registrando...</Text>
+                      <Text style={styles.buttonTitle}>{t('common.loading')}</Text>
                       <Text style={styles.buttonSubtitle}>Por favor espera</Text>
                     </View>
                   </>
@@ -700,18 +703,18 @@ export default function FichajeScreen() {
                     </View>
                     <View style={styles.buttonContent}>
                       <Text style={styles.buttonTitle}>
-                        {isBreak ? 'Registrar Descanso' : `Fichar ${getNextEntryLabel(actionType)}`}
+                        {isBreak ? t('fichaje.startBreak') : `${t('fichaje.clockIn')} ${getNextEntryLabel(actionType)}`}
                       </Text>
                       <Text style={styles.buttonSubtitle}>
                         {isBreak
-                          ? 'Pausar jornada laboral'
+                          ? t('fichaje.pauseWorkday')
                           : actionType === 'ENTRADA'
-                            ? 'Iniciar jornada laboral'
+                            ? t('fichaje.startWorkday')
                             : actionType === 'ENTRADA_2'
-                              ? 'Iniciar segundo turno'
+                              ? t('fichaje.startSecondShift')
                               : actionType === 'SALIDA'
-                                ? 'Finalizar primer turno'
-                                : 'Finalizar jornada laboral'}
+                                ? t('fichaje.endFirstShift')
+                                : t('fichaje.endWorkday')}
                       </Text>
                     </View>
                   </>
@@ -724,7 +727,7 @@ export default function FichajeScreen() {
         {/* Fichajes de Hoy */}
         {todayEntries.length > 0 && !isFetching ? (
           <View style={styles.lastEntrySection}>
-            <Text style={styles.lastEntryLabel}>Fichajes de hoy</Text>
+            <Text style={styles.lastEntryLabel}>{t('fichaje.todaysClocks')}</Text>
             {todayEntries.map((entry, index) => {
               const entryColor = getButtonColor(entry.entry_type);
               // Colores pasteles para el fondo
@@ -767,14 +770,14 @@ export default function FichajeScreen() {
           <View style={styles.summarySection}>
             <View style={styles.summaryCard}>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryItemLabel}>Horas trabajadas</Text>
+                <Text style={styles.summaryItemLabel}>{t('fichaje.workedHours')}</Text>
                 <Text style={styles.summaryItemValue}>
                   {Math.floor(calculateWorkedHours(todayEntries) / 60)}h {calculateWorkedHours(todayEntries) % 60}m
                 </Text>
               </View>
               <View style={styles.summaryVerticalDivider} />
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryItemLabel}>Descanso</Text>
+                <Text style={styles.summaryItemLabel}>{t('fichaje.breakTime')}</Text>
                 <Text style={styles.summaryItemValue}>
                   {Math.floor(calculateBreakTime(todayEntries) / 60)}h {calculateBreakTime(todayEntries) % 60}m
                 </Text>

@@ -1,11 +1,13 @@
 import { Colors } from '@/constants/Colors';
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type ShiftType = 'single' | 'split';
 
 export default function CalculadoraScreen() {
+    const { t } = useTranslation();
     const [shiftType, setShiftType] = useState<ShiftType>('single');
 
     const [start1Hour, setStart1Hour] = useState(9);
@@ -113,7 +115,7 @@ export default function CalculadoraScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>Calculadora de Horas</Text>
+                <Text style={styles.title}>{t('calculadora.title')}</Text>
             </View>
 
             <View style={styles.content}>
@@ -150,14 +152,14 @@ export default function CalculadoraScreen() {
                             min={start1Min}
                             onHourPress={() => openPicker('hour', start1Hour, setStart1Hour)}
                             onMinPress={() => openPicker('minute', start1Min, setStart1Min)}
-                            label="Entrada"
+                            label={t('fichaje.entry')}
                         />
                         <TimePicker
                             hour={end1Hour}
                             min={end1Min}
                             onHourPress={() => openPicker('hour', end1Hour, setEnd1Hour)}
                             onMinPress={() => openPicker('minute', end1Min, setEnd1Min)}
-                            label="Salida"
+                            label={t('fichaje.exit')}
                         />
                     </View>
                 </View>
@@ -172,14 +174,14 @@ export default function CalculadoraScreen() {
                                 min={start2Min}
                                 onHourPress={() => openPicker('hour', start2Hour, setStart2Hour)}
                                 onMinPress={() => openPicker('minute', start2Min, setStart2Min)}
-                                label="Entrada"
+                                label={t('fichaje.entry')}
                             />
                             <TimePicker
                                 hour={end2Hour}
                                 min={end2Min}
                                 onHourPress={() => openPicker('hour', end2Hour, setEnd2Hour)}
                                 onMinPress={() => openPicker('minute', end2Min, setEnd2Min)}
-                                label="Salida"
+                                label={t('fichaje.exit')}
                             />
                         </View>
                     </View>
@@ -187,7 +189,7 @@ export default function CalculadoraScreen() {
 
                 {/* Descanso */}
                 <View style={styles.breakSection}>
-                    <Text style={styles.breakLabel}>Descanso: <Text style={styles.breakValue}>{breakMins} min</Text></Text>
+                    <Text style={styles.breakLabel}>{t('fichaje.breakTime')}: <Text style={styles.breakValue}>{breakMins} min</Text></Text>
                     <View style={styles.breakControls}>
                         <TouchableOpacity
                             style={styles.breakBtn}
@@ -227,13 +229,13 @@ export default function CalculadoraScreen() {
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
                             <TouchableOpacity onPress={() => setPickerVisible(false)}>
-                                <Text style={styles.modalCancel}>Cancelar</Text>
+                                <Text style={styles.modalCancel}>{t('common.cancel')}</Text>
                             </TouchableOpacity>
                             <Text style={styles.modalTitle}>
                                 {pickerType === 'hour' ? 'Seleccionar Hora' : 'Seleccionar Minutos'}
                             </Text>
                             <TouchableOpacity onPress={() => confirmPicker(currentValue)}>
-                                <Text style={styles.modalConfirm}>Listo</Text>
+                                <Text style={styles.modalConfirm}>{t('common.confirm')}</Text>
                             </TouchableOpacity>
                         </View>
                         <ScrollView style={styles.pickerScroll}>

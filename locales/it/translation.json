@@ -1,0 +1,123 @@
+{
+    "common": {
+        "save": "Salva",
+        "cancel": "Annulla",
+        "confirm": "Conferma",
+        "loading": "Caricamento...",
+        "error": "Errore",
+        "success": "Successo",
+        "close": "Chiudi",
+        "edit": "Modifica",
+        "delete": "Elimina",
+        "yes": "Sì",
+        "no": "No"
+    },
+    "auth": {
+        "login": "Accedi",
+        "logout": "Esci",
+        "email": "E-mail",
+        "password": "Password",
+        "loginSuccess": "Accesso riuscito: {{name}}",
+        "errors": {
+            "invalidCredentials": "Credenziali non valide",
+            "emailRequired": "L'email è richiesta",
+            "passwordRequired": "La password è richiesta"
+        }
+    },
+    "fichaje": {
+        "title": "Timbratura",
+        "quickClock": "Timbratura rapida",
+        "readyToClock": "Pronto a timbrare",
+        "loading": "Caricamento...",
+        "clockIn": "Timbra entrata",
+        "clockOut": "Timbra uscita",
+        "break": "Pausa",
+        "startBreak": "Inizia pausa",
+        "finishBreak": "Termina pausa",
+        "breakInProgress": "Pausa in corso",
+        "todaysClocks": "Timbrature di oggi",
+        "workedHours": "Ore lavorate",
+        "breakTime": "Pausa",
+        "entry": "Entrata",
+        "exit": "Uscita",
+        "nthEntry": "{{n}}ª Entrata",
+        "nthExit": "{{n}}ª Uscita",
+        "startWorkday": "Inizia giornata lavorativa",
+        "endWorkday": "Termina giornata lavorativa",
+        "startSecondShift": "Inizia secondo turno",
+        "endFirstShift": "Termina primo turno",
+        "pauseWorkday": "Metti in pausa la giornata lavorativa",
+        "alerts": {
+            "breakQuestion": "Hai fatto una pausa di 30 minuti durante il tuo {{shift}}?",
+            "firstShift": "primo turno",
+            "secondShift": "secondo turno",
+            "clockRegistered": "Timbratura registrata!",
+            "breakStarted": "Pausa iniziata!",
+            "breakFinished": "Pausa terminata!",
+            "breakRecorded": "La tua pausa e uscita sono state registrate correttamente",
+            "breakAndExit": "Registrata pausa di 30min e {{exitType}} alle {{time}}",
+            "duration": "Durata totale: {{minutes}}m {{seconds}}s",
+            "notificationIn30": "Riceverai una notifica tra 30 minuti.",
+            "notificationRequiresBuild": "La tua pausa è iniziata. Le notifiche richiedono un development build."
+        }
+    },
+    "calendario": {
+        "title": "Calendario",
+        "weekly": "Settimanale",
+        "monthly": "Mensile",
+        "totalWeek": "Totale settimana",
+        "totalMonth": "Totale mese",
+        "hours": "{{hours}}h {{minutes}}m",
+        "noData": "Nessun dato"
+    },
+    "calculadora": {
+        "title": "Calcolatrice",
+        "calculate": "Calcola",
+        "startTime": "Ora di inizio",
+        "endTime": "Ora di fine",
+        "breakDuration": "Durata pausa (min)",
+        "result": "Risultato",
+        "totalHours": "Totale ore lavorate"
+    },
+    "solicitudes": {
+        "title": "Richieste",
+        "newRequest": "Nuova richiesta",
+        "myRequests": "Le mie richieste",
+        "type": "Tipo",
+        "startDate": "Data di inizio",
+        "endDate": "Data di fine",
+        "status": "Stato",
+        "reason": "Motivo",
+        "vacation": "Ferie",
+        "sickLeave": "Congedo per malattia",
+        "personalLeave": "Permesso personale",
+        "pending": "In attesa",
+        "approved": "Approvata",
+        "rejected": "Rifiutata",
+        "createRequest": "Crea richiesta"
+    },
+    "perfil": {
+        "title": "Il mio profilo",
+        "personalInfo": "Informazioni personali",
+        "workInfo": "Informazioni lavorative",
+        "fullName": "Nome completo",
+        "birthDate": "Data di nascita",
+        "email": "E-mail",
+        "phone": "Telefono",
+        "position": "Posizione",
+        "language": "Lingua",
+        "selectLanguage": "Seleziona lingua",
+        "editPhone": "Modifica telefono",
+        "phoneNumber": "Numero di telefono",
+        "selectCountry": "Seleziona paese",
+        "notSpecified": "Non specificato",
+        "years": "{{age}} anni",
+        "ext": "Int. {{extension}}"
+    },
+    "errors": {
+        "saveFailed": "Impossibile salvare",
+        "loadFailed": "Impossibile caricare",
+        "networkError": "Errore di connessione",
+        "unknownError": "Si è verificato un errore sconosciuto"
+    }
+}

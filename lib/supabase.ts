@@ -27,6 +27,7 @@ export interface User {
     birth_date?: string;
     role: 'worker' | 'admin' | 'supervisor';
     department?: string;
+    avatar_url?: string;
     created_at: string;
     updated_at: string;
     is_active: boolean;

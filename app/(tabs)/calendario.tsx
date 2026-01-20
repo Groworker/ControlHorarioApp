@@ -2,9 +2,11 @@ import { Colors } from '@/constants/Colors';
 import { clockService } from '@/services/clock.service';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function CalendarioScreen() {
+    const { t } = useTranslation();
     const [selectedWeek, setSelectedWeek] = useState(getCurrentWeek());
     const [selectedMonth, setSelectedMonth] = useState(new Date());
     const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
@@ -176,7 +178,7 @@ export default function CalendarioScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Calendario</Text>
+                <Text style={styles.headerTitle}>{t('calendario.title')}</Text>
             </View>
 
             {/* Navegación */}
@@ -197,14 +199,14 @@ export default function CalendarioScreen() {
                             onPress={() => setViewMode('week')}
                             activeOpacity={0.7}
                         >
-                            <Text style={viewMode === 'week' ? styles.toggleTextActive : styles.toggleText}>Semana</Text>
+                            <Text style={viewMode === 'week' ? styles.toggleTextActive : styles.toggleText}>{t('calendario.weekly')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.toggleButton, viewMode === 'month' && styles.toggleActive]}
                             onPress={() => setViewMode('month')}
                             activeOpacity={0.7}
                         >
-                            <Text style={viewMode === 'month' ? styles.toggleTextActive : styles.toggleText}>Mes</Text>
+                            <Text style={viewMode === 'month' ? styles.toggleTextActive : styles.toggleText}>{t('calendario.monthly')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -262,7 +264,7 @@ export default function CalendarioScreen() {
 
                         <View style={styles.tableTotalRow}>
                             <View style={[styles.tableCell, { flex: 1.2 }]}>
-                                <Text style={styles.tableTotalText}>TOTAL</Text>
+                                <Text style={styles.tableTotalText}>{t('calendario.totalWeek')}</Text>
                             </View>
                             <View style={[styles.tableCell, { flex: 1.5 }]} />
                             <View style={styles.tableCell}>
@@ -327,7 +329,7 @@ export default function CalendarioScreen() {
 
                         {/* Total mensual */}
                         <View style={styles.monthTotal}>
-                            <Text style={styles.monthTotalLabel}>TOTAL DEL MES</Text>
+                            <Text style={styles.monthTotalLabel}>{t('calendario.totalMonth')}</Text>
                             <Text style={styles.monthTotalValue}>{calculateTotal()}</Text>
                         </View>
                     </View>

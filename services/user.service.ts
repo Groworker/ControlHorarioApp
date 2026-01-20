@@ -41,6 +41,7 @@ export const userService = {
         phone_extension?: string;
         birth_date?: string;
         department?: string;
+        avatar_url?: string;
     }): Promise<{ success: boolean; user?: User; error?: string }> {
         try {
             const currentUser = await authService.getCurrentUser();
@@ -67,6 +68,7 @@ export const userService = {
             if (updates.phone_extension !== undefined) updateData.phone_extension = updates.phone_extension.trim();
             if (updates.birth_date !== undefined) updateData.birth_date = updates.birth_date;
             if (updates.department !== undefined) updateData.department = updates.department.trim();
+            if (updates.avatar_url !== undefined) updateData.avatar_url = updates.avatar_url;
 
             updateData.updated_at = new Date().toISOString();
 

@@ -3,7 +3,7 @@
     "name": "ControlHorario_Onya",
     "slug": "ControlHorario_Onya",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "controlhorarioonya",
     "userInterfaceStyle": "automatic",
@@ -38,7 +38,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -3,6 +3,7 @@ import { requestService, type EntryType } from '@/services/request.service';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface RequestDisplay {
@@ -15,6 +16,7 @@ interface RequestDisplay {
 }
 
 export default function SolicitudesScreen() {
+    const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(true);
 
@@ -174,7 +176,7 @@ export default function SolicitudesScreen() {
     const submitRequest = async () => {
         if (!reason.trim()) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Error', 'Por favor ingresa un motivo para la solicitud');
+            Alert.alert(t('common.error'), t('solicitudes.reason'));
             return;
         }
 
@@ -212,12 +214,12 @@ export default function SolicitudesScreen() {
                 );
             } else {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                Alert.alert('Error', result.error || 'No se pudo crear la solicitud');
+                Alert.alert(t('common.error'), result.error || t('errors.saveFailed'));
             }
         } catch (error) {
             console.error('Error submitting request:', error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Error', 'Ocurrió un error al enviar la solicitud');
+            Alert.alert(t('common.error'), t('errors.saveFailed'));
         } finally {
             setIsLoading(false);
         }
@@ -263,7 +265,7 @@ export default function SolicitudesScreen() {
                             console.log('Requests reloaded after delete');
                         } else {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                            Alert.alert('Error', result.error || 'No se pudo eliminar la solicitud');
+                            Alert.alert(t('common.error'), result.error || t('errors.saveFailed'));
                         }
                     }
                 }
@@ -334,7 +336,7 @@ export default function SolicitudesScreen() {
                             console.log('Requests reloaded after bulk delete');
                         } else {
                             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                            Alert.alert('Error', result.error || 'No se pudieron eliminar las solicitudes');
+                            Alert.alert(t('common.error'), result.error || t('errors.saveFailed'));
                         }
                     }
                 }
@@ -361,7 +363,7 @@ export default function SolicitudesScreen() {
     const submitEdit = async () => {
         if (!reason.trim() || !editingRequest) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Error', 'Por favor ingresa un motivo para la solicitud');
+            Alert.alert(t('common.error'), t('solicitudes.reason'));
             return;
         }
 
@@ -400,12 +402,12 @@ export default function SolicitudesScreen() {
                 );
             } else {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                Alert.alert('Error', result.error || 'No se pudo actualizar la solicitud');
+                Alert.alert(t('common.error'), result.error || t('errors.saveFailed'));
             }
         } catch (error) {
             console.error('Error updating request:', error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Error', 'Ocurrió un error al actualizar la solicitud');
+            Alert.alert(t('common.error'), t('errors.saveFailed'));
         } finally {
             setIsLoading(false);
         }

@@ -1,0 +1,123 @@
+{
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success",
+        "close": "Close",
+        "edit": "Edit",
+        "delete": "Delete",
+        "yes": "Yes",
+        "no": "No"
+    },
+    "auth": {
+        "login": "Log In",
+        "logout": "Log Out",
+        "email": "Email",
+        "password": "Password",
+        "loginSuccess": "Login successful: {{name}}",
+        "errors": {
+            "invalidCredentials": "Invalid credentials",
+            "emailRequired": "Email is required",
+            "passwordRequired": "Password is required"
+        }
+    },
+    "fichaje": {
+        "title": "Clock",
+        "quickClock": "Quick Clock",
+        "readyToClock": "Ready to clock",
+        "loading": "Loading...",
+        "clockIn": "Clock In",
+        "clockOut": "Clock Out",
+        "break": "Break",
+        "startBreak": "Start Break",
+        "finishBreak": "Finish break",
+        "breakInProgress": "Break in progress",
+        "todaysClocks": "Today's clocks",
+        "workedHours": "Worked hours",
+        "breakTime": "Break",
+        "entry": "Entry",
+        "exit": "Exit",
+        "nthEntry": "{{n}}{{ordinal}} Entry",
+        "nthExit": "{{n}}{{ordinal}} Exit",
+        "startWorkday": "Start workday",
+        "endWorkday": "End workday",
+        "startSecondShift": "Start second shift",
+        "endFirstShift": "End first shift",
+        "pauseWorkday": "Pause workday",
+        "alerts": {
+            "breakQuestion": "Did you take a 30-minute break during your {{shift}}?",
+            "firstShift": "first shift",
+            "secondShift": "second shift",
+            "clockRegistered": "Clock registered!",
+            "breakStarted": "Break started!",
+            "breakFinished": "Break finished!",
+            "breakRecorded": "Your break and exit have been recorded correctly",
+            "breakAndExit": "Registered 30min break and {{exitType}} at {{time}}",
+            "duration": "Total duration: {{minutes}}m {{seconds}}s",
+            "notificationIn30": "You will receive a notification in 30 minutes.",
+            "notificationRequiresBuild": "Your break has started. Notifications require a development build."
+        }
+    },
+    "calendario": {
+        "title": "Calendar",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "totalWeek": "Week Total",
+        "totalMonth": "Month Total",
+        "hours": "{{hours}}h {{minutes}}m",
+        "noData": "No data"
+    },
+    "calculadora": {
+        "title": "Calculator",
+        "calculate": "Calculate",
+        "startTime": "Start time",
+        "endTime": "End time",
+        "breakDuration": "Break duration (min)",
+        "result": "Result",
+        "totalHours": "Total worked hours"
+    },
+    "solicitudes": {
+        "title": "Requests",
+        "newRequest": "New Request",
+        "myRequests": "My Requests",
+        "type": "Type",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "status": "Status",
+        "reason": "Reason",
+        "vacation": "Vacation",
+        "sickLeave": "Sick leave",
+        "personalLeave": "Personal leave",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "createRequest": "Create Request"
+    },
+    "perfil": {
+        "title": "My Profile",
+        "personalInfo": "Personal Information",
+        "workInfo": "Work Information",
+        "fullName": "Full Name",
+        "birthDate": "Date of Birth",
+        "email": "Email",
+        "phone": "Phone",
+        "position": "Position",
+        "language": "Language",
+        "selectLanguage": "Select Language",
+        "editPhone": "Edit Phone",
+        "phoneNumber": "Phone Number",
+        "selectCountry": "Select Country",
+        "notSpecified": "Not specified",
+        "years": "{{age}} years",
+        "ext": "Ext. {{extension}}"
+    },
+    "errors": {
+        "saveFailed": "Could not save",
+        "load Failed": "Could not load",
+        "networkError": "Connection error",
+        "unknownError": "An unknown error occurred"
+    }
+}

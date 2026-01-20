@@ -1,0 +1,123 @@
+{
+    "common": {
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "confirm": "Confirmar",
+        "loading": "Cargando...",
+        "error": "Error",
+        "success": "Éxito",
+        "close": "Cerrar",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "yes": "Sí",
+        "no": "No"
+    },
+    "auth": {
+        "login": "Iniciar Sesión",
+        "logout": "Cerrar Sesión",
+        "email": "Correo Electrónico",
+        "password": "Contraseña",
+        "loginSuccess": "Login exitoso: {{name}}",
+        "errors": {
+            "invalidCredentials": "Credenciales inválidas",
+            "emailRequired": "El correo es requerido",
+            "passwordRequired": "La contraseña es requerida"
+        }
+    },
+    "fichaje": {
+        "title": "Fichaje",
+        "quickClock": "Fichaje Rápido",
+        "readyToClock": "Listo para fichar",
+        "loading": "Cargando...",
+        "clockIn": "Fichar Entrada",
+        "clockOut": "Fichar Salida",
+        "break": "Descanso",
+        "startBreak": "Registrar Descanso",
+        "finishBreak": "Finalizar descanso",
+        "breakInProgress": "Descanso en curso",
+        "todaysClocks": "Fichajes de hoy",
+        "workedHours": "Horas trabajadas",
+        "breakTime": "Descanso",
+        "entry": "Entrada",
+        "exit": "Salida",
+        "nthEntry": "{{n}}ª Entrada",
+        "nthExit": "{{n}}ª Salida",
+        "startWorkday": "Iniciar jornada laboral",
+        "endWorkday": "Finalizar jornada laboral",
+        "startSecondShift": "Iniciar segundo turno",
+        "endFirstShift": "Finalizar primer turno",
+        "pauseWorkday": "Pausar jornada laboral",
+        "alerts": {
+            "breakQuestion": "¿Has realizado descanso de 30 minutos en tu {{shift}}?",
+            "firstShift": "primer turno",
+            "secondShift": "segundo turno",
+            "clockRegistered": "¡Fichaje registrado!",
+            "breakStarted": "¡Descanso iniciado!",
+            "breakFinished": "¡Descanso finalizado!",
+            "breakRecorded": "Se ha registrado tu descanso y salida correctamente",
+            "breakAndExit": "Se ha registrado descanso de 30min y {{exitType}} a las {{time}}",
+            "duration": "Duración total: {{minutes}}m {{seconds}}s",
+            "notificationIn30": "Recibirás una notificación en 30 minutos.",
+            "notificationRequiresBuild": "Tu descanso ha comenzado. Las notificaciones requieren un development build."
+        }
+    },
+    "calendario": {
+        "title": "Calendario",
+        "weekly": "Semanal",
+        "monthly": "Mensual",
+        "totalWeek": "Total Semana",
+        "totalMonth": "Total Mes",
+        "hours": "{{hours}}h {{minutes}}m",
+        "noData": "Sin datos"
+    },
+    "calculadora": {
+        "title": "Calculadora",
+        "calculate": "Calcular",
+        "startTime": "Hora de entrada",
+        "endTime": "Hora de salida",
+        "breakDuration": "Duración del descanso (min)",
+        "result": "Resultado",
+        "totalHours": "Total de horas trabajadas"
+    },
+    "solicitudes": {
+        "title": "Solicitudes",
+        "newRequest": "Nueva Solicitud",
+        "myRequests": "Mis Solicitudes",
+        "type": "Tipo",
+        "startDate": "Fecha de inicio",
+        "endDate": "Fecha de fin",
+        "status": "Estado",
+        "reason": "Motivo",
+        "vacation": "Vacaciones",
+        "sickLeave": "Baja por enfermedad",
+        "personalLeave": "Permiso personal",
+        "pending": "Pendiente",
+        "approved": "Aprobada",
+        "rejected": "Rechazada",
+        "createRequest": "Crear Solicitud"
+    },
+    "perfil": {
+        "title": "Mi Perfil",
+        "personalInfo": "Información Personal",
+        "workInfo": "Información Laboral",
+        "fullName": "Nombre Completo",
+        "birthDate": "Fecha de Nacimiento",
+        "email": "Correo Electrónico",
+        "phone": "Teléfono",
+        "position": "Puesto",
+        "language": "Idioma",
+        "selectLanguage": "Seleccionar Idioma",
+        "editPhone": "Editar Teléfono",
+        "phoneNumber": "Número de Teléfono",
+        "selectCountry": "Seleccionar País",
+        "notSpecified": "No especificado",
+        "years": "{{age}} años",
+        "ext": "Ext. {{extension}}"
+    },
+    "errors": {
+        "saveFailed": "No se pudo guardar",
+        "loadFailed": "No se pudo cargar",
+        "networkError": "Error de conexión",
+        "unknownError": "Ocurrió un error desconocido"
+    }
+}
