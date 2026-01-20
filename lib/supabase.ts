@@ -22,6 +22,9 @@ export interface User {
     full_name: string;
     email?: string;
     phone?: string;
+    phone_country_code?: string;
+    phone_extension?: string;
+    birth_date?: string;
     role: 'worker' | 'admin' | 'supervisor';
     department?: string;
     created_at: string;
