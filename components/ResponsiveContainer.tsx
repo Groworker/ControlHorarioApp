@@ -1,6 +1,6 @@
 import { useResponsive } from '@/hooks/useResponsive';
 import React from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { DimensionValue, StyleSheet, View, ViewStyle } from 'react-native';
 
 interface ResponsiveContainerProps {
     children: React.ReactNode;
@@ -19,12 +19,12 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
     const { isTablet } = useResponsive();
 
     // Calcular ancho máximo
-    let computedMaxWidth: number | string | undefined = undefined;
+    let computedMaxWidth: DimensionValue | undefined = undefined;
     if (isTablet) {
         if (typeof maxWidth === 'number') {
             computedMaxWidth = maxWidth;
         } else {
-            const widths: Record<'phone' | 'tablet' | 'tabletWide', number | string> = {
+            const widths: Record<'phone' | 'tablet' | 'tabletWide', DimensionValue> = {
                 phone: '100%',
                 tablet: 800,
                 tabletWide: 1000,

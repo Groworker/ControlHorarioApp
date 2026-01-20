@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/Colors';
+import { changeLanguage } from '@/i18n';
 import { profilePictureService } from '@/services/profile-picture.service';
 import { userService } from '@/services/user.service';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { CountryCode } from 'react-native-country-picker-modal';
 
 type EditField = 'name' | 'birth_date' | 'email' | 'phone' | 'department' | null;
@@ -533,6 +534,29 @@ export default function PerfilScreen() {
                     </View>
                 </View>
 
+                {/* Configuración */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Configuración</Text>
+                    <View style={styles.card}>
+                        <TouchableOpacity
+                            style={styles.infoRow}
+                            onPress={() => setShowLanguagePicker(true)}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.infoLeft}>
+                                <Ionicons name="language-outline" size={20} color="#64748B" style={styles.settingIcon} />
+                                <Text style={styles.infoLabel}>Idioma</Text>
+                            </View>
+                            <View style={styles.infoRight}>
+                                <Text style={styles.infoValue}>
+                                    {LANGUAGES.find(lang => lang.code === i18n.language)?.flag} {LANGUAGES.find(lang => lang.code === i18n.language)?.name || 'Español'}
+                                </Text>
+                                <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
                 <View style={{ height: 40 }} />
             </ScrollView>
 
@@ -888,6 +912,60 @@ export default function PerfilScreen() {
                         </TouchableOpacity>
                     </View>
                 </View>
+            </Modal>
+
+            {/* Language Picker Modal */}
+            <Modal
+                visible={showLanguagePicker}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setShowLanguagePicker(false)}
+            >
+                <TouchableWithoutFeedback onPress={() => setShowLanguagePicker(false)}>
+                    <View style={styles.modalOverlay}>
+                        <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+                            <View style={styles.modalContent}>
+                                <Text style={styles.modalTitle}>Seleccionar Idioma</Text>
+
+                                <ScrollView style={{ maxHeight: 400 }}>
+                                    {LANGUAGES.map((language) => (
+                                        <TouchableOpacity
+                                            key={language.code}
+                                            style={[
+                                                styles.languageOption,
+                                                i18n.language === language.code && styles.languageOptionActive
+                                            ]}
+                                            onPress={async () => {
+                                                await changeLanguage(language.code);
+                                                setShowLanguagePicker(false);
+                                                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                            }}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Text style={styles.languageFlag}>{language.flag}</Text>
+                                            <Text style={[
+                                                styles.languageName,
+                                                i18n.language === language.code && styles.languageNameActive
+                                            ]}>
+                                                {language.name}
+                                            </Text>
+                                            {i18n.language === language.code && (
+                                                <Ionicons name="checkmark" size={24} color={Colors.light.primary} />
+                                            )}
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+
+                                <TouchableOpacity
+                                    style={[styles.modalButton, styles.cancelButton, { marginTop: 16 }]}
+                                    onPress={() => setShowLanguagePicker(false)}
+                                >
+                                    <Text style={styles.cancelButtonText}>Cancelar</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </View>
+                </TouchableWithoutFeedback>
             </Modal>
         </>
     );
@@ -1311,6 +1389,44 @@ const styles = StyleSheet.create({
     },
     pickerItemTextSelected: {
         color: '#FFFFFF',
+        fontWeight: '600',
+    },
+    // Missing info styles
+    infoLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    infoRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    settingIcon: {
+        marginRight: 12,
+    },
+    // Language Picker specific styles
+    languageOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.light.borderLight,
+    },
+    languageOptionActive: {
+        backgroundColor: '#F0F9FF',
+    },
+    languageFlag: {
+        fontSize: 24,
+        marginRight: 12,
+    },
+    languageName: {
+        fontSize: 16,
+        color: Colors.light.text,
+        flex: 1,
+    },
+    languageNameActive: {
+        color: Colors.light.primary,
         fontWeight: '600',
     },
 });
