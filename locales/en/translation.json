@@ -10,7 +10,9 @@
         "edit": "Edit",
         "delete": "Delete",
         "yes": "Yes",
-        "no": "No"
+        "no": "No",
+        "ok": "OK",
+        "ready": "Ready"
     },
     "auth": {
         "login": "Log In",
@@ -18,6 +20,12 @@
         "email": "Email",
         "password": "Password",
         "loginSuccess": "Login successful: {{name}}",
+        "enterCode": "Enter Your Code",
+        "enterCodeSubtitle": "Enter your {{length}}-digit code",
+        "verifying": "Verifying...",
+        "deleteButton": "Delete",
+        "invalidCode": "Invalid code",
+        "serverError": "Error connecting to server",
         "errors": {
             "invalidCredentials": "Invalid credentials",
             "emailRequired": "Email is required",
@@ -47,6 +55,31 @@
         "startSecondShift": "Start second shift",
         "endFirstShift": "End first shift",
         "pauseWorkday": "Pause workday",
+        "pleaseWait": "Please wait",
+        "registeredCorrectly": "registered correctly",
+        "days": {
+            "sunday": "Sunday",
+            "monday": "Monday",
+            "tuesday": "Tuesday",
+            "wednesday": "Wednesday",
+            "thursday": "Thursday",
+            "friday": "Friday",
+            "saturday": "Saturday"
+        },
+        "months": {
+            "january": "january",
+            "february": "february",
+            "march": "march",
+            "april": "april",
+            "may": "may",
+            "june": "june",
+            "july": "july",
+            "august": "august",
+            "september": "september",
+            "october": "october",
+            "november": "november",
+            "december": "december"
+        },
         "alerts": {
             "breakQuestion": "Did you take a 30-minute break during your {{shift}}?",
             "firstShift": "first shift",
@@ -56,6 +89,8 @@
             "breakFinished": "Break finished!",
             "breakRecorded": "Your break and exit have been recorded correctly",
             "breakAndExit": "Registered 30min break and {{exitType}} at {{time}}",
+            "breakCompleted": "⏰ Break completed",
+            "breakCompletedMessage": "You've completed your 30-minute break. Time to get back to work!",
             "duration": "Total duration: {{minutes}}m {{seconds}}s",
             "notificationIn30": "You will receive a notification in 30 minutes.",
             "notificationRequiresBuild": "Your break has started. Notifications require a development build."
@@ -68,7 +103,58 @@
         "totalWeek": "Week Total",
         "totalMonth": "Month Total",
         "hours": "{{hours}}h {{minutes}}m",
-        "noData": "No data"
+        "noData": "No data",
+        "table": {
+            "day": "Day",
+            "date": "Date",
+            "hours": "Hours"
+        },
+        "days": {
+            "monday": "Monday",
+            "tuesday": "Tuesday",
+            "wednesday": "Wednesday",
+            "thursday": "Thursday",
+            "friday": "Friday",
+            "saturday": "Saturday",
+            "sunday": "Sunday"
+        },
+        "daysShort": {
+            "monday": "M",
+            "tuesday": "T",
+            "wednesday": "W",
+            "thursday": "T",
+            "friday": "F",
+            "saturday": "S",
+            "sunday": "S"
+        },
+        "months": {
+            "january": "January",
+            "february": "February",
+            "march": "March",
+            "april": "April",
+            "may": "May",
+            "june": "June",
+            "july": "July",
+            "august": "August",
+            "september": "September",
+            "october": "October",
+            "november": "November",
+            "december": "December"
+        },
+        "monthsShort": {
+            "january": "jan",
+            "february": "feb",
+            "march": "mar",
+            "april": "apr",
+            "may": "may",
+            "june": "jun",
+            "july": "jul",
+            "august": "aug",
+            "september": "sep",
+            "october": "oct",
+            "november": "nov",
+            "december": "dec"
+        }
     },
     "calculadora": {
         "title": "Calculator",
@@ -77,7 +163,19 @@
         "endTime": "End time",
         "breakDuration": "Break duration (min)",
         "result": "Result",
-        "totalHours": "Total worked hours"
+        "totalHours": "Total worked hours",
+        "shiftTypes": {
+            "single": "Single Shift",
+            "split": "Split Shift"
+        },
+        "shifts": {
+            "first": "FIRST SHIFT",
+            "second": "SECOND SHIFT",
+            "schedule": "WORK SCHEDULE"
+        },
+        "total": "TOTAL",
+        "selectHour": "Select Hour",
+        "selectMinutes": "Select Minutes"
     },
     "solicitudes": {
         "title": "Requests",
@@ -94,7 +192,47 @@
         "pending": "Pending",
         "approved": "Approved",
         "rejected": "Rejected",
-        "createRequest": "Create Request"
+        "createRequest": "Create Request",
+        "editRequest": "Edit Request",
+        "back": "← Back",
+        "new": "+ New",
+        "selected": "{{count}} selected",
+        "loadingRequests": "Loading requests...",
+        "noRequests": "No requests",
+        "noRequestsSubtext": "Create a new request to register a forgotten clock",
+        "entryTypes": {
+            "entry": "Entry",
+            "exit": "Exit",
+            "entry2": "Entry T2",
+            "exit2": "Exit T2",
+            "break": "Break"
+        },
+        "form": {
+            "clockType": "Clock Type",
+            "date": "Date",
+            "time": "Time",
+            "reasonPlaceholder": "Explain why you forgot to clock...",
+            "selectHour": "Select Hour",
+            "selectMinutes": "Select Minutes",
+            "selectDate": "Select Date",
+            "day": "Day",
+            "month": "Month",
+            "year": "Year",
+            "submit": "Submit Request",
+            "update": "Update Request"
+        },
+        "alerts": {
+            "requestSent": "Request sent!",
+            "requestSentMessage": "Your request has been sent and is pending approval.",
+            "requestUpdated": "Request updated!",
+            "requestUpdatedMessage": "Your request has been updated successfully.",
+            "cannotDelete": "Cannot delete",
+            "cannotDeleteMessage": "You can only delete pending requests.",
+            "deleteRequest": "Delete Request",
+            "deleteRequestMessage": "Are you sure you want to delete this request?",
+            "deleteRequests": "Delete Requests",
+            "deleteRequestsMessage": "Are you sure you want to delete {{count}} request(s)?"
+        }
     },
     "perfil": {
         "title": "My Profile",
@@ -112,11 +250,27 @@
         "selectCountry": "Select Country",
         "notSpecified": "Not specified",
         "years": "{{age}} years",
-        "ext": "Ext. {{extension}}"
+        "ext": "Ext. {{extension}}",
+        "configuration": "Settings",
+        "loadingProfile": "Loading profile...",
+        "couldNotLoad": "Could not load profile",
+        "retry": "Retry",
+        "selectPosition": "Select Position",
+        "selectBirthDate": "Select Date of Birth",
+        "errors": {
+            "emptyField": "This field cannot be empty",
+            "invalidEmail": "Please enter a valid email",
+            "couldNotSave": "Could not save",
+            "saveError": "An error occurred while saving",
+            "selectPosition": "Please select a position",
+            "imageError": "Could not select image",
+            "uploadError": "Could not upload image",
+            "processingError": "An error occurred while processing the image"
+        }
     },
     "errors": {
         "saveFailed": "Could not save",
-        "load Failed": "Could not load",
+        "loadFailed": "Could not load",
         "networkError": "Connection error",
         "unknownError": "An unknown error occurred"
     }

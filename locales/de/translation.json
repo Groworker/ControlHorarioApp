@@ -10,7 +10,9 @@
         "edit": "Bearbeiten",
         "delete": "Löschen",
         "yes": "Ja",
-        "no": "Nein"
+        "no": "Nein",
+        "ok": "OK",
+        "ready": "Fertig"
     },
     "auth": {
         "login": "Anmelden",
@@ -18,6 +20,12 @@
         "email": "E-Mail",
         "password": "Passwort",
         "loginSuccess": "Anmeldung erfolgreich: {{name}}",
+        "enterCode": "Geben Sie Ihren Code ein",
+        "enterCodeSubtitle": "Geben Sie Ihren {{length}}-stelligen Code ein",
+        "verifying": "Überprüfung...",
+        "deleteButton": "Löschen",
+        "invalidCode": "Ungültiger Code",
+        "serverError": "Fehler beim Verbinden mit dem Server",
         "errors": {
             "invalidCredentials": "Ungültige Anmeldedaten",
             "emailRequired": "E-Mail ist erforderlich",
@@ -47,6 +55,31 @@
         "startSecondShift": "Zweite Schicht beginnen",
         "endFirstShift": "Erste Schicht beenden",
         "pauseWorkday": "Arbeitstag pausieren",
+        "pleaseWait": "Bitte warten",
+        "registeredCorrectly": "korrekt registriert",
+        "days": {
+            "sunday": "Sonntag",
+            "monday": "Montag",
+            "tuesday": "Dienstag",
+            "wednesday": "Mittwoch",
+            "thursday": "Donnerstag",
+            "friday": "Freitag",
+            "saturday": "Samstag"
+        },
+        "months": {
+            "january": "januar",
+            "february": "februar",
+            "march": "märz",
+            "april": "april",
+            "may": "mai",
+            "june": "juni",
+            "july": "juli",
+            "august": "august",
+            "september": "september",
+            "october": "oktober",
+            "november": "november",
+            "december": "dezember"
+        },
         "alerts": {
             "breakQuestion": "Haben Sie während Ihrer {{shift}} eine 30-minütige Pause gemacht?",
             "firstShift": "ersten Schicht",
@@ -56,6 +89,8 @@
             "breakFinished": "Pause beendet!",
             "breakRecorded": "Ihre Pause und Ihr Ausgang wurden korrekt erfasst",
             "breakAndExit": "30min Pause und {{exitType}} um {{time}} erfasst",
+            "breakCompleted": "⏰ Pause abgeschlossen",
+            "breakCompletedMessage": "Sie haben Ihre 30-minütige Pause absolviert. Zeit, wieder an die Arbeit zu gehen!",
             "duration": "Gesamtdauer: {{minutes}}m {{seconds}}s",
             "notificationIn30": "Sie erhalten in 30 Minuten eine Benachrichtigung.",
             "notificationRequiresBuild": "Ihre Pause hat begonnen. Benachrichtigungen erfordern einen Development Build."
@@ -68,7 +103,58 @@
         "totalWeek": "Wochensumme",
         "totalMonth": "Monatssumme",
         "hours": "{{hours}}h {{minutes}}m",
-        "noData": "Keine Daten"
+        "noData": "Keine Daten",
+        "table": {
+            "day": "Tag",
+            "date": "Datum",
+            "hours": "Stunden"
+        },
+        "days": {
+            "monday": "Montag",
+            "tuesday": "Dienstag",
+            "wednesday": "Mittwoch",
+            "thursday": "Donnerstag",
+            "friday": "Freitag",
+            "saturday": "Samstag",
+            "sunday": "Sonntag"
+        },
+        "daysShort": {
+            "monday": "M",
+            "tuesday": "D",
+            "wednesday": "M",
+            "thursday": "D",
+            "friday": "F",
+            "saturday": "S",
+            "sunday": "S"
+        },
+        "months": {
+            "january": "Januar",
+            "february": "Februar",
+            "march": "März",
+            "april": "April",
+            "may": "Mai",
+            "june": "Juni",
+            "july": "Juli",
+            "august": "August",
+            "september": "September",
+            "october": "Oktober",
+            "november": "November",
+            "december": "Dezember"
+        },
+        "monthsShort": {
+            "january": "jan",
+            "february": "feb",
+            "march": "mär",
+            "april": "apr",
+            "may": "mai",
+            "june": "jun",
+            "july": "jul",
+            "august": "aug",
+            "september": "sep",
+            "october": "okt",
+            "november": "nov",
+            "december": "dez"
+        }
     },
     "calculadora": {
         "title": "Rechner",
@@ -77,7 +163,19 @@
         "endTime": "Endzeit",
         "breakDuration": "Pausendauer (Min)",
         "result": "Ergebnis",
-        "totalHours": "Gesamtarbeitsstunden"
+        "totalHours": "Gesamtarbeitsstunden",
+        "shiftTypes": {
+            "single": "Einzelschicht",
+            "split": "Geteilte Schicht"
+        },
+        "shifts": {
+            "first": "ERSTE SCHICHT",
+            "second": "ZWEITE SCHICHT",
+            "schedule": "ARBEITSZEITPLAN"
+        },
+        "total": "GESAMT",
+        "selectHour": "Stunde auswählen",
+        "selectMinutes": "Minuten auswählen"
     },
     "solicitudes": {
         "title": "Anfragen",
@@ -94,7 +192,47 @@
         "pending": "Ausstehend",
         "approved": "Genehmigt",
         "rejected": "Abgelehnt",
-        "createRequest": "Anfrage erstellen"
+        "createRequest": "Anfrage erstellen",
+        "editRequest": "Anfrage bearbeiten",
+        "back": "← Zurück",
+        "new": "+ Neu",
+        "selected": "{{count}} ausgewählt",
+        "loadingRequests": "Anfragen werden geladen...",
+        "noRequests": "Keine Anfragen",
+        "noRequestsSubtext": "Erstellen Sie eine neue Anfrage, um eine vergessene Zeiterfassung zu registrieren",
+        "entryTypes": {
+            "entry": "Eingang",
+            "exit": "Ausgang",
+            "entry2": "Eingang T2",
+            "exit2": "Ausgang T2",
+            "break": "Pause"
+        },
+        "form": {
+            "clockType": "Zeiterfassungstyp",
+            "date": "Datum",
+            "time": "Uhrzeit",
+            "reasonPlaceholder": "Erklären Sie, warum Sie vergessen haben zu stempeln...",
+            "selectHour": "Stunde auswählen",
+            "selectMinutes": "Minuten auswählen",
+            "selectDate": "Datum auswählen",
+            "day": "Tag",
+            "month": "Monat",
+            "year": "Jahr",
+            "submit": "Anfrage senden",
+            "update": "Anfrage aktualisieren"
+        },
+        "alerts": {
+            "requestSent": "Anfrage gesendet!",
+            "requestSentMessage": "Ihre Anfrage wurde gesendet und wartet auf Genehmigung.",
+            "requestUpdated": "Anfrage aktualisiert!",
+            "requestUpdatedMessage": "Ihre Anfrage wurde erfolgreich aktualisiert.",
+            "cannotDelete": "Kann nicht gelöscht werden",
+            "cannotDeleteMessage": "Sie können nur ausstehende Anfragen löschen.",
+            "deleteRequest": "Anfrage löschen",
+            "deleteRequestMessage": "Sind Sie sicher, dass Sie diese Anfrage löschen möchten?",
+            "deleteRequests": "Anfragen löschen",
+            "deleteRequestsMessage": "Sind Sie sicher, dass Sie {{count}} Anfrage(n) löschen möchten?"
+        }
     },
     "perfil": {
         "title": "Mein Profil",
@@ -112,7 +250,23 @@
         "selectCountry": "Land auswählen",
         "notSpecified": "Nicht angegeben",
         "years": "{{age}} Jahre",
-        "ext": "Nw. {{extension}}"
+        "ext": "Nw. {{extension}}",
+        "configuration": "Einstellungen",
+        "loadingProfile": "Profil wird geladen...",
+        "couldNotLoad": "Profil konnte nicht geladen werden",
+        "retry": "Wiederholen",
+        "selectPosition": "Position auswählen",
+        "selectBirthDate": "Geburtsdatum auswählen",
+        "errors": {
+            "emptyField": "Dieses Feld darf nicht leer sein",
+            "invalidEmail": "Bitte geben Sie eine gültige E-Mail ein",
+            "couldNotSave": "Konnte nicht gespeichert werden",
+            "saveError": "Beim Speichern ist ein Fehler aufgetreten",
+            "selectPosition": "Bitte wählen Sie eine Position",
+            "imageError": "Bild konnte nicht ausgewählt werden",
+            "uploadError": "Bild konnte nicht hochgeladen werden",
+            "processingError": "Beim Verarbeiten des Bildes ist ein Fehler aufgetreten"
+        }
     },
     "errors": {
         "saveFailed": "Speichern fehlgeschlagen",

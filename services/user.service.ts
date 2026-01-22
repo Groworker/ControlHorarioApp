@@ -42,6 +42,7 @@ export const userService = {
         birth_date?: string;
         department?: string;
         avatar_url?: string;
+        weekly_hours?: number;
     }): Promise<{ success: boolean; user?: User; error?: string }> {
         try {
             const currentUser = await authService.getCurrentUser();
@@ -59,6 +60,11 @@ export const userService = {
                 return { success: false, error: 'El nombre no puede estar vacío' };
             }
 
+            // Validar weekly_hours si se proporciona
+            if (updates.weekly_hours !== undefined && (updates.weekly_hours < 0 || updates.weekly_hours > 168)) {
+                return { success: false, error: 'Las horas semanales deben estar entre 0 y 168' };
+            }
+
             // Preparar datos para actualizar
             const updateData: any = {};
             if (updates.full_name !== undefined) updateData.full_name = updates.full_name.trim();
@@ -69,6 +75,7 @@ export const userService = {
             if (updates.birth_date !== undefined) updateData.birth_date = updates.birth_date;
             if (updates.department !== undefined) updateData.department = updates.department.trim();
             if (updates.avatar_url !== undefined) updateData.avatar_url = updates.avatar_url;
+            if (updates.weekly_hours !== undefined) updateData.weekly_hours = updates.weekly_hours;
 
             updateData.updated_at = new Date().toISOString();
 

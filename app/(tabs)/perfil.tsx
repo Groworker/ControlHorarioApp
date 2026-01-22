@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { CountryCode } from 'react-native-country-picker-modal';
 
-type EditField = 'name' | 'birth_date' | 'email' | 'phone' | 'department' | null;
+type EditField = 'name' | 'birth_date' | 'email' | 'phone' | 'department' | 'weekly_hours' | null;
 
 // Country codes with flags and names
 const COUNTRIES = [
@@ -79,6 +79,7 @@ export default function PerfilScreen() {
         birth_date: string;
         department: string;
         avatar_url: string;
+        weekly_hours: number;
     } | null>(null);
 
     // Date picker states
@@ -107,6 +108,7 @@ export default function PerfilScreen() {
                     birth_date: user.birth_date || '',
                     department: user.department || '',
                     avatar_url: user.avatar_url || '',
+                    weekly_hours: user.weekly_hours || 40,
                 });
 
                 // Pre-fill form fields
@@ -152,6 +154,10 @@ export default function PerfilScreen() {
             // Show job picker
             setSelectedJobPosition(currentValue || '');
             setShowJobPicker(true);
+        } else if (field === 'weekly_hours') {
+            // For weekly_hours, convert number to string
+            setEditValue(userProfile?.weekly_hours ? String(userProfile.weekly_hours) : '');
+            setShowEditModal(true);
         } else {
             setEditValue(currentValue);
             setShowEditModal(true);
@@ -176,6 +182,14 @@ export default function PerfilScreen() {
             return;
         }
 
+        if (editingField === 'weekly_hours') {
+            const hoursValue = parseInt(valueToSave, 10);
+            if (isNaN(hoursValue) || hoursValue < 0 || hoursValue > 168) {
+                Alert.alert('Error', 'Por favor ingresa un número válido entre 0 y 168');
+                return;
+            }
+        }
+
         setIsSaving(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -187,11 +201,17 @@ export default function PerfilScreen() {
                 'email': 'email',
                 'phone': 'phone',
                 'department': 'department',
+                'weekly_hours': 'weekly_hours',
             };
 
             const dbFieldName = editingField ? fieldMapping[editingField] || editingField : '';
             if (dbFieldName) {
-                updates[dbFieldName] = valueToSave;
+                // Convert to number for weekly_hours
+                if (editingField === 'weekly_hours') {
+                    updates[dbFieldName] = parseInt(valueToSave, 10);
+                } else {
+                    updates[dbFieldName] = valueToSave;
+                }
             }
 
             console.log('Updating profile with:', updates);
@@ -209,6 +229,7 @@ export default function PerfilScreen() {
                     birth_date: result.user.birth_date || '',
                     department: result.user.department || '',
                     avatar_url: result.user.avatar_url || '',
+                    weekly_hours: result.user.weekly_hours || 40,
                 });
                 setShowEditModal(false);
                 setEditingField(null);
@@ -396,6 +417,7 @@ export default function PerfilScreen() {
             email: 'Correo Electrónico',
             phone: 'Teléfono',
             department: 'Puesto',
+            weekly_hours: 'Horas a la Semana',
         };
         return field ? labels[field] : '';
     };
@@ -531,6 +553,12 @@ export default function PerfilScreen() {
                             value={userProfile.department}
                             field="department"
                         />
+                        <EditableInfoRow
+                            icon="time-outline"
+                            label="Horas a la Semana"
+                            value={userProfile.weekly_hours ? `${userProfile.weekly_hours} horas` : 'No especificado'}
+                            field="weekly_hours"
+                        />
                     </View>
                 </View>
 
@@ -576,7 +604,7 @@ export default function PerfilScreen() {
                             value={editValue}
                             onChangeText={setEditValue}
                             placeholder={`Ingresa ${getFieldLabel(editingField).toLowerCase()}`}
-                            keyboardType={editingField === 'email' ? 'email-address' : 'default'}
+                            keyboardType={editingField === 'email' ? 'email-address' : editingField === 'weekly_hours' ? 'numeric' : 'default'}
                             autoCapitalize={editingField === 'email' ? 'none' : 'words'}
                             autoFocus
                         />

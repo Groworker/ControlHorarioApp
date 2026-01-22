@@ -10,7 +10,9 @@
         "edit": "Modifier",
         "delete": "Supprimer",
         "yes": "Oui",
-        "no": "Non"
+        "no": "Non",
+        "ok": "OK",
+        "ready": "Prêt"
     },
     "auth": {
         "login": "Se connecter",
@@ -18,6 +20,12 @@
         "email": "E-mail",
         "password": "Mot de passe",
         "loginSuccess": "Connexion réussie: {{name}}",
+        "enterCode": "Entrez votre code",
+        "enterCodeSubtitle": "Entrez votre code à {{length}} chiffres",
+        "verifying": "Vérification...",
+        "deleteButton": "Supprimer",
+        "invalidCode": "Code invalide",
+        "serverError": "Erreur de connexion au serveur",
         "errors": {
             "invalidCredentials": "Identifiants invalides",
             "emailRequired": "L'e-mail est requis",
@@ -47,6 +55,31 @@
         "startSecondShift": "Commencer le deuxième quart",
         "endFirstShift": "Terminer le premier quart",
         "pauseWorkday": "Mettre en pause la journée",
+        "pleaseWait": "Veuillez patienter",
+        "registeredCorrectly": "enregistré correctement",
+        "days": {
+            "sunday": "Dimanche",
+            "monday": "Lundi",
+            "tuesday": "Mardi",
+            "wednesday": "Mercredi",
+            "thursday": "Jeudi",
+            "friday": "Vendredi",
+            "saturday": "Samedi"
+        },
+        "months": {
+            "january": "janvier",
+            "february": "février",
+            "march": "mars",
+            "april": "avril",
+            "may": "mai",
+            "june": "juin",
+            "july": "juillet",
+            "august": "août",
+            "september": "septembre",
+            "october": "octobre",
+            "november": "novembre",
+            "december": "décembre"
+        },
         "alerts": {
             "breakQuestion": "Avez-vous pris une pause de 30 minutes pendant votre {{shift}}?",
             "firstShift": "premier quart",
@@ -56,6 +89,8 @@
             "breakFinished": "Pause terminée!",
             "breakRecorded": "Votre pause et sortie ont été enregistrées correctement",
             "breakAndExit": "Pause de 30min et {{exitType}} enregistrées à {{time}}",
+            "breakCompleted": "⏰ Pause terminée",
+            "breakCompletedMessage": "Vous avez terminé votre pause de 30 minutes. Il est temps de retourner au travail!",
             "duration": "Durée totale: {{minutes}}m {{seconds}}s",
             "notificationIn30": "Vous recevrez une notification dans 30 minutes.",
             "notificationRequiresBuild": "Votre pause a commencé. Les notifications nécessitent un development build."
@@ -68,7 +103,58 @@
         "totalWeek": "Total de la semaine",
         "totalMonth": "Total du mois",
         "hours": "{{hours}}h {{minutes}}m",
-        "noData": "Aucune donnée"
+        "noData": "Aucune donnée",
+        "table": {
+            "day": "Jour",
+            "date": "Date",
+            "hours": "Heures"
+        },
+        "days": {
+            "monday": "Lundi",
+            "tuesday": "Mardi",
+            "wednesday": "Mercredi",
+            "thursday": "Jeudi",
+            "friday": "Vendredi",
+            "saturday": "Samedi",
+            "sunday": "Dimanche"
+        },
+        "daysShort": {
+            "monday": "L",
+            "tuesday": "M",
+            "wednesday": "M",
+            "thursday": "J",
+            "friday": "V",
+            "saturday": "S",
+            "sunday": "D"
+        },
+        "months": {
+            "january": "Janvier",
+            "february": "Février",
+            "march": "Mars",
+            "april": "Avril",
+            "may": "Mai",
+            "june": "Juin",
+            "july": "Juillet",
+            "august": "Août",
+            "september": "Septembre",
+            "october": "Octobre",
+            "november": "Novembre",
+            "december": "Décembre"
+        },
+        "monthsShort": {
+            "january": "jan",
+            "february": "fév",
+            "march": "mar",
+            "april": "avr",
+            "may": "mai",
+            "june": "juin",
+            "july": "juil",
+            "august": "août",
+            "september": "sep",
+            "october": "oct",
+            "november": "nov",
+            "december": "déc"
+        }
     },
     "calculadora": {
         "title": "Calculatrice",
@@ -77,7 +163,19 @@
         "endTime": "Heure de sortie",
         "breakDuration": "Durée de la pause (min)",
         "result": "Résultat",
-        "totalHours": "Total d'heures travaillées"
+        "totalHours": "Total d'heures travaillées",
+        "shiftTypes": {
+            "single": "Quart simple",
+            "split": "Quart partagé"
+        },
+        "shifts": {
+            "first": "PREMIER QUART",
+            "second": "DEUXIÈME QUART",
+            "schedule": "HORAIRE DE TRAVAIL"
+        },
+        "total": "TOTAL",
+        "selectHour": "Sélectionner l'heure",
+        "selectMinutes": "Sélectionner les minutes"
     },
     "solicitudes": {
         "title": "Demandes",
@@ -94,7 +192,47 @@
         "pending": "En attente",
         "approved": "Approuvée",
         "rejected": "Rejetée",
-        "createRequest": "Créer une demande"
+        "createRequest": "Créer une demande",
+        "editRequest": "Modifier la demande",
+        "back": "← Retour",
+        "new": "+ Nouveau",
+        "selected": "{{count}} sélectionné(s)",
+        "loadingRequests": "Chargement des demandes...",
+        "noRequests": "Aucune demande",
+        "noRequestsSubtext": "Créez une nouvelle demande pour enregistrer un pointage oublié",
+        "entryTypes": {
+            "entry": "Entrée",
+            "exit": "Sortie",
+            "entry2": "Entrée T2",
+            "exit2": "Sortie T2",
+            "break": "Pause"
+        },
+        "form": {
+            "clockType": "Type de pointage",
+            "date": "Date",
+            "time": "Heure",
+            "reasonPlaceholder": "Expliquez pourquoi vous avez oublié de pointer...",
+            "selectHour": "Sélectionner l'heure",
+            "selectMinutes": "Sélectionner les minutes",
+            "selectDate": "Sélectionner la date",
+            "day": "Jour",
+            "month": "Mois",
+            "year": "Année",
+            "submit": "Envoyer la demande",
+            "update": "Mettre à jour la demande"
+        },
+        "alerts": {
+            "requestSent": "Demande envoyée!",
+            "requestSentMessage": "Votre demande a été envoyée et est en attente d'approbation.",
+            "requestUpdated": "Demande mise à jour!",
+            "requestUpdatedMessage": "Votre demande a été mise à jour avec succès.",
+            "cannotDelete": "Impossible de supprimer",
+            "cannotDeleteMessage": "Vous ne pouvez supprimer que les demandes en attente.",
+            "deleteRequest": "Supprimer la demande",
+            "deleteRequestMessage": "Êtes-vous sûr de vouloir supprimer cette demande?",
+            "deleteRequests": "Supprimer les demandes",
+            "deleteRequestsMessage": "Êtes-vous sûr de vouloir supprimer {{count}} demande(s)?"
+        }
     },
     "perfil": {
         "title": "Mon profil",
@@ -112,7 +250,23 @@
         "selectCountry": "Sélectionner le pays",
         "notSpecified": "Non spécifié",
         "years": "{{age}} ans",
-        "ext": "Ext. {{extension}}"
+        "ext": "Ext. {{extension}}",
+        "configuration": "Paramètres",
+        "loadingProfile": "Chargement du profil...",
+        "couldNotLoad": "Impossible de charger le profil",
+        "retry": "Réessayer",
+        "selectPosition": "Sélectionner le poste",
+        "selectBirthDate": "Sélectionner la date de naissance",
+        "errors": {
+            "emptyField": "Ce champ ne peut pas être vide",
+            "invalidEmail": "Veuillez entrer un e-mail valide",
+            "couldNotSave": "Impossible d'enregistrer",
+            "saveError": "Une erreur s'est produite lors de l'enregistrement",
+            "selectPosition": "Veuillez sélectionner un poste",
+            "imageError": "Impossible de sélectionner l'image",
+            "uploadError": "Impossible de télécharger l'image",
+            "processingError": "Une erreur s'est produite lors du traitement de l'image"
+        }
     },
     "errors": {
         "saveFailed": "Impossible d'enregistrer",

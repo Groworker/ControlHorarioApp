@@ -3,6 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     ActivityIndicator,
     Dimensions,
@@ -17,6 +18,7 @@ import {
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
+    const { t } = useTranslation();
     const [code, setCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -62,13 +64,13 @@ export default function LoginScreen() {
                 } else {
                     // Vibración de error
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                    setErrorMessage(result.error || 'Código inválido');
+                    setErrorMessage(result.error || t('auth.invalidCode'));
                     setCode(''); // Limpiar el código
                 }
             } catch (error) {
                 console.error('Error en login:', error);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                setErrorMessage('Error al conectar con el servidor');
+                setErrorMessage(t('auth.serverError'));
                 setCode('');
             } finally {
                 setIsLoading(false);
@@ -122,8 +124,8 @@ export default function LoginScreen() {
                 </View>
 
                 {/* Título */}
-                <Text style={styles.title}>Ingrese su Código</Text>
-                <Text style={styles.subtitle}>Introduce tu código de {PIN_LENGTH} dígitos</Text>
+                <Text style={styles.title}>{t('auth.enterCode')}</Text>
+                <Text style={styles.subtitle}>{t('auth.enterCodeSubtitle', { length: PIN_LENGTH })}</Text>
 
                 {/* PIN Display - Círculos */}
                 <View style={styles.pinContainer}>
@@ -151,7 +153,7 @@ export default function LoginScreen() {
                 {isLoading ? (
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="small" color="#FFFFFF" />
-                        <Text style={styles.loadingText}>Verificando...</Text>
+                        <Text style={styles.loadingText}>{t('auth.verifying')}</Text>
                     </View>
                 ) : null}
 
@@ -187,7 +189,7 @@ export default function LoginScreen() {
                             onPress={handleDelete}
                             activeOpacity={0.5}
                         >
-                            <Text style={styles.deleteButtonText}>Borrar</Text>
+                            <Text style={styles.deleteButtonText}>{t('auth.deleteButton')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
