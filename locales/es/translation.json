@@ -257,6 +257,19 @@
         "retry": "Reintentar",
         "selectPosition": "Seleccionar Puesto",
         "selectBirthDate": "Seleccionar Fecha de Nacimiento",
+        "weeklyHours": "Horas a la Semana",
+        "hours": "horas",
+        "positions": {
+            "director": "Director/a",
+            "headChef": "Chef de Cocina",
+            "chefDePartie": "Chef de Partie",
+            "sousChef": "Segundo Chef",
+            "kitchenAssistant": "Ayudante de Cocina",
+            "headWaiter": "Jefe/a de Sala",
+            "waiter": "Camarero/a",
+            "housekeepingManager": "Jefe/a de Housekeeping",
+            "housekeeping": "Housekeeping"
+        },
         "errors": {
             "emptyField": "Este campo no puede estar vacío",
             "invalidEmail": "Por favor ingresa un email válido",
@@ -265,7 +278,8 @@
             "selectPosition": "Por favor selecciona un puesto",
             "imageError": "No se pudo seleccionar la imagen",
             "uploadError": "No se pudo subir la imagen",
-            "processingError": "Ocurrió un error al procesar la imagen"
+            "processingError": "Ocurrió un error al procesar la imagen",
+            "invalidHours": "Por favor ingresa un número válido entre 0 y 168"
         }
     },
     "errors": {

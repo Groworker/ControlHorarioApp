@@ -24,17 +24,17 @@ const COUNTRIES = [
     { code: '+1', flag: '🇺🇸', name: 'Estados Unidos', cca2: 'US' },
 ];
 
-// Job positions
-const JOB_POSITIONS = [
-    'Director/a',
-    'Chef de Cocina',
-    'Chef de Partie',
-    'Segundo Chef',
-    'Ayudante de Cocina',
-    'Jefe/a de Sala',
-    'Camarero/a',
-    'Jefe/a de Housekeeping',
-    'Housekeeping',
+// Job positions - will be translated dynamically
+const getJobPositions = (t: any) => [
+    t('perfil.positions.director'),
+    t('perfil.positions.headChef'),
+    t('perfil.positions.chefDePartie'),
+    t('perfil.positions.sousChef'),
+    t('perfil.positions.kitchenAssistant'),
+    t('perfil.positions.headWaiter'),
+    t('perfil.positions.waiter'),
+    t('perfil.positions.housekeepingManager'),
+    t('perfil.positions.housekeeping'),
 ];
 
 // Languages
@@ -120,11 +120,11 @@ export default function PerfilScreen() {
                 setCountryCode(codeMap[savedCode] || 'ES');
 
             } else {
-                Alert.alert('Error', result.error || 'No se pudo cargar el perfil');
+                Alert.alert(t('common.error'), result.error || t('perfil.errors.couldNotSave'));
             }
         } catch (error) {
             console.error('Error loading profile:', error);
-            Alert.alert('Error', 'Ocurrió un error al cargar el perfil');
+            Alert.alert(t('common.error'), t('perfil.errors.saveError'));
         } finally {
             setIsLoading(false);
         }
@@ -173,19 +173,19 @@ export default function PerfilScreen() {
 
         // Validation
         if (!valueToSave && editingField !== 'phone') {
-            Alert.alert('Error', 'Este campo no puede estar vacío');
+            Alert.alert(t('common.error'), t('perfil.errors.emptyField'));
             return;
         }
 
         if (editingField === 'email' && valueToSave && !userService.isValidEmail(valueToSave)) {
-            Alert.alert('Error', 'Por favor ingresa un email válido');
+            Alert.alert(t('common.error'), t('perfil.errors.invalidEmail'));
             return;
         }
 
         if (editingField === 'weekly_hours') {
             const hoursValue = parseInt(valueToSave, 10);
             if (isNaN(hoursValue) || hoursValue < 0 || hoursValue > 168) {
-                Alert.alert('Error', 'Por favor ingresa un número válido entre 0 y 168');
+                Alert.alert(t('common.error'), t('perfil.errors.invalidHours'));
                 return;
             }
         }
@@ -241,7 +241,7 @@ export default function PerfilScreen() {
         } catch (error) {
             console.error('Error saving:', error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Error', 'Ocurrió un error al guardar');
+            Alert.alert(t('common.error'), t('perfil.errors.saveError'));
         } finally {
             setIsSaving(false);
         }
@@ -280,7 +280,7 @@ export default function PerfilScreen() {
         } catch (error) {
             console.error('Error saving phone:', error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Error', 'Ocurrió un error al guardar');
+            Alert.alert(t('common.error'), t('perfil.errors.saveError'));
         } finally {
             setIsSaving(false);
         }
@@ -288,7 +288,7 @@ export default function PerfilScreen() {
 
     const saveJobPosition = async () => {
         if (!selectedJobPosition) {
-            Alert.alert('Error', 'Por favor selecciona un puesto');
+            Alert.alert(t('common.error'), t('perfil.errors.selectPosition'));
             return;
         }
 
@@ -309,7 +309,7 @@ export default function PerfilScreen() {
         } catch (error) {
             console.error('Error saving job position:', error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Error', 'Ocurrió un error al guardar');
+            Alert.alert(t('common.error'), t('perfil.errors.saveError'));
         } finally {
             setIsSaving(false);
         }
@@ -336,7 +336,7 @@ export default function PerfilScreen() {
         } catch (error) {
             console.error('Error saving birth date:', error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Error', 'Ocurrió un error al guardar');
+            Alert.alert(t('common.error'), t('perfil.errors.saveError'));
         } finally {
             setIsSaving(false);
         }
@@ -366,7 +366,7 @@ export default function PerfilScreen() {
 
             if (!pickResult.success || !pickResult.uri) {
                 if (pickResult.error !== 'Selección cancelada' && pickResult.error !== 'Captura cancelada') {
-                    Alert.alert('Error', pickResult.error || 'No se pudo seleccionar la imagen');
+                    Alert.alert(t('common.error'), pickResult.error || t('perfil.errors.imageError'));
                 }
                 setIsUploadingAvatar(false);
                 return;
@@ -379,7 +379,7 @@ export default function PerfilScreen() {
                 setUserProfile(prev => prev ? { ...prev, avatar_url: uploadResult.avatarUrl! } : null);
             } else {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                Alert.alert('Error', uploadResult.error || 'No se pudo subir la imagen');
+                Alert.alert(t('common.error'), uploadResult.error || t('perfil.errors.uploadError'));
             }
         } catch (error) {
             console.error('Error uploading avatar:', error);
@@ -391,7 +391,7 @@ export default function PerfilScreen() {
     };
 
     const formatDateDisplay = (dateString: string) => {
-        if (!dateString) return 'No especificado';
+        if (!dateString) return t('perfil.notSpecified');
         const date = new Date(dateString);
         const day = date.getDate().toString().padStart(2, '0');
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -400,12 +400,12 @@ export default function PerfilScreen() {
     };
 
     const formatPhoneDisplay = () => {
-        if (!userProfile?.phone) return 'No especificado';
+        if (!userProfile?.phone) return t('perfil.notSpecified');
 
         const country = COUNTRIES.find(c => c.code === userProfile.phone_country_code);
         const flag = country?.flag || '📱';
         const countryName = country?.name || '';
-        const ext = userProfile.phone_extension ? ` Ext. ${userProfile.phone_extension}` : '';
+        const ext = userProfile.phone_extension ? ` ${t('perfil.ext', { extension: userProfile.phone_extension })}` : '';
 
         return `${flag} ${userProfile.phone_country_code} ${userProfile.phone}${ext}`;
     };
@@ -443,7 +443,7 @@ export default function PerfilScreen() {
             </View>
             <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>{label}</Text>
-                <Text style={styles.infoValue}>{value || 'No especificado'}</Text>
+                <Text style={styles.infoValue}>{value || t('perfil.notSpecified')}</Text>
             </View>
             <Ionicons name="create-outline" size={20} color={Colors.light.textSecondary} />
         </TouchableOpacity>
@@ -453,7 +453,7 @@ export default function PerfilScreen() {
         return (
             <View style={[styles.container, styles.loadingContainer]}>
                 <ActivityIndicator size="large" color={Colors.light.primary} />
-                <Text style={styles.loadingText}>Cargando perfil...</Text>
+                <Text style={styles.loadingText}>{t('perfil.loadingProfile')}</Text>
             </View>
         );
     }
@@ -461,23 +461,23 @@ export default function PerfilScreen() {
     if (!userProfile) {
         return (
             <View style={[styles.container, styles.loadingContainer]}>
-                <Text style={styles.errorText}>No se pudo cargar el perfil</Text>
+                <Text style={styles.errorText}>{t('perfil.couldNotLoad')}</Text>
                 <TouchableOpacity style={styles.retryButton} onPress={loadProfile}>
-                    <Text style={styles.retryButtonText}>Reintentar</Text>
+                    <Text style={styles.retryButtonText}>{t('perfil.retry')}</Text>
                 </TouchableOpacity>
             </View>
         );
     }
 
     const birthDateDisplay = userProfile.birth_date
-        ? `${formatDateDisplay(userProfile.birth_date)} (${calcularEdad(userProfile.birth_date)} años)`
-        : 'No especificado';
+        ? `${formatDateDisplay(userProfile.birth_date)} (${t('perfil.years', { age: calcularEdad(userProfile.birth_date) })})`
+        : t('perfil.notSpecified');
 
     return (
         <>
             <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
-                    <Text style={styles.title}>Mi Perfil</Text>
+                    <Text style={styles.title}>{t('perfil.title')}</Text>
                 </View>
 
                 {/* Foto y Nombre */}
@@ -514,29 +514,29 @@ export default function PerfilScreen() {
 
                 {/* Información Personal */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Información Personal</Text>
+                    <Text style={styles.sectionTitle}>{t('perfil.personalInfo')}</Text>
                     <View style={styles.card}>
                         <EditableInfoRow
                             icon="person-outline"
-                            label="Nombre Completo"
+                            label={t('perfil.fullName')}
                             value={userProfile.full_name}
                             field="name"
                         />
                         <EditableInfoRow
                             icon="calendar-outline"
-                            label="Fecha de Nacimiento"
+                            label={t('perfil.birthDate')}
                             value={birthDateDisplay}
                             field="birth_date"
                         />
                         <EditableInfoRow
                             icon="mail-outline"
-                            label="Correo Electrónico"
+                            label={t('perfil.email')}
                             value={userProfile.email}
                             field="email"
                         />
                         <EditableInfoRow
                             icon="call-outline"
-                            label="Teléfono"
+                            label={t('perfil.phone')}
                             value={formatPhoneDisplay()}
                             field="phone"
                         />
@@ -545,18 +545,18 @@ export default function PerfilScreen() {
 
                 {/* Información Laboral */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Información Laboral</Text>
+                    <Text style={styles.sectionTitle}>{t('perfil.workInfo')}</Text>
                     <View style={styles.card}>
                         <EditableInfoRow
                             icon="briefcase-outline"
-                            label="Puesto"
+                            label={t('perfil.position')}
                             value={userProfile.department}
                             field="department"
                         />
                         <EditableInfoRow
                             icon="time-outline"
-                            label="Horas a la Semana"
-                            value={userProfile.weekly_hours ? `${userProfile.weekly_hours} horas` : 'No especificado'}
+                            label={t('perfil.weeklyHours')}
+                            value={userProfile.weekly_hours ? `${userProfile.weekly_hours} ${t('perfil.hours')}` : t('perfil.notSpecified')}
                             field="weekly_hours"
                         />
                     </View>
@@ -564,7 +564,7 @@ export default function PerfilScreen() {
 
                 {/* Configuración */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Configuración</Text>
+                    <Text style={styles.sectionTitle}>{t('perfil.configuration')}</Text>
                     <View style={styles.card}>
                         <TouchableOpacity
                             style={styles.infoRow}
@@ -573,7 +573,7 @@ export default function PerfilScreen() {
                         >
                             <View style={styles.infoLeft}>
                                 <Ionicons name="language-outline" size={20} color="#64748B" style={styles.settingIcon} />
-                                <Text style={styles.infoLabel}>Idioma</Text>
+                                <Text style={styles.infoLabel}>{t('perfil.language')}</Text>
                             </View>
                             <View style={styles.infoRight}>
                                 <Text style={styles.infoValue}>
@@ -597,7 +597,7 @@ export default function PerfilScreen() {
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Editar {getFieldLabel(editingField)}</Text>
+                        <Text style={styles.modalTitle}>{t('common.edit')} {getFieldLabel(editingField)}</Text>
 
                         <TextInput
                             style={styles.input}
@@ -618,7 +618,7 @@ export default function PerfilScreen() {
                                 }}
                                 disabled={isSaving}
                             >
-                                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                                <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -629,7 +629,7 @@ export default function PerfilScreen() {
                                 {isSaving ? (
                                     <ActivityIndicator color="#FFFFFF" size="small" />
                                 ) : (
-                                    <Text style={styles.saveButtonText}>Guardar</Text>
+                                    <Text style={styles.saveButtonText}>{t('common.save')}</Text>
                                 )}
                             </TouchableOpacity>
                         </View>
@@ -650,10 +650,10 @@ export default function PerfilScreen() {
                 >
                     <View style={styles.modalOverlay}>
                         <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>Editar Teléfono</Text>
+                            <Text style={styles.modalTitle}>{t('perfil.editPhone')}</Text>
 
                             {/* Phone Number Row */}
-                            <Text style={styles.label}>Número de Teléfono</Text>
+                            <Text style={styles.label}>{t('perfil.phoneNumber')}</Text>
                             <View style={styles.phoneInputRow}>
                                 <TouchableOpacity
                                     style={styles.countryCodeButton}
@@ -687,7 +687,7 @@ export default function PerfilScreen() {
                                     onPress={() => setShowEditModal(false)}
                                     disabled={isSaving}
                                 >
-                                    <Text style={styles.cancelButtonText}>Cancelar</Text>
+                                    <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
@@ -698,7 +698,7 @@ export default function PerfilScreen() {
                                     {isSaving ? (
                                         <ActivityIndicator color="#FFFFFF" size="small" />
                                     ) : (
-                                        <Text style={styles.saveButtonText}>Guardar</Text>
+                                        <Text style={styles.saveButtonText}>{t('common.save')}</Text>
                                     )}
                                 </TouchableOpacity>
                             </View>
@@ -717,7 +717,7 @@ export default function PerfilScreen() {
                 <View style={styles.modalOverlay}>
                     <View style={styles.pickerModal}>
                         <View style={styles.pickerHeader}>
-                            <Text style={styles.pickerTitle}>Seleccionar País</Text>
+                            <Text style={styles.pickerTitle}>{t('perfil.selectCountry')}</Text>
                             <TouchableOpacity onPress={() => setShowCountryPicker(false)}>
                                 <Ionicons name="close" size={24} color={Colors.light.text} />
                             </TouchableOpacity>
@@ -763,7 +763,7 @@ export default function PerfilScreen() {
                             </TouchableOpacity>
                         </View>
                         <ScrollView>
-                            {JOB_POSITIONS.map(position => (
+                            {getJobPositions(t).map((position, index) => (
                                 <TouchableOpacity
                                     key={position}
                                     style={[

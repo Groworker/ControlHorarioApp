@@ -357,8 +357,8 @@ export default function FichajeScreen() {
 
           Alert.alert(
             t('fichaje.alerts.clockRegistered'),
-            `${getNextEntryLabel(entryType)} registrada correctamente`,
-            [{ text: 'OK' }]
+            `${getNextEntryLabel(entryType)} ${t('fichaje.registeredCorrectly')}`,
+            [{ text: t('common.ok') }]
           );
         } else {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -398,7 +398,7 @@ export default function FichajeScreen() {
         Alert.alert(
           t('fichaje.alerts.breakFinished'),
           t('fichaje.alerts.duration', { minutes, seconds }),
-          [{ text: 'OK' }]
+          [{ text: t('common.ok') }]
         );
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -461,7 +461,7 @@ export default function FichajeScreen() {
 
   // Calcular etiqueta para el próximo fichaje (para botones)
   const getNextEntryLabel = (type: EntryType): string => {
-    if (type === 'DESCANSO') return 'Descanso';
+    if (type === 'DESCANSO') return t('fichaje.break');
 
     const entradasCount = todayEntries.filter(e =>
       e.entry_type === 'ENTRADA' || e.entry_type === 'ENTRADA_2'
@@ -473,12 +473,12 @@ export default function FichajeScreen() {
 
     if (type === 'ENTRADA' || type === 'ENTRADA_2') {
       const turnoNum = entradasCount + 1;
-      return `${turnoNum}ª Entrada`;
+      return t('fichaje.nthEntry', { n: turnoNum });
     }
 
     if (type === 'SALIDA' || type === 'SALIDA_2') {
       const turnoNum = salidasCount + 1;
-      return `${turnoNum}ª Salida`;
+      return t('fichaje.nthExit', { n: turnoNum });
     }
 
     return type;
@@ -486,7 +486,7 @@ export default function FichajeScreen() {
 
   // Calcular etiqueta para fichaje existente (para historial)
   const getEntryLabel = (entry: ClockEntry, allEntries: ClockEntry[]): string => {
-    if (entry.entry_type === 'DESCANSO') return 'Descanso';
+    if (entry.entry_type === 'DESCANSO') return t('fichaje.break');
 
     // Encontrar la posición de esta entrada específica entre todas las entradas/salidas
     const sortedEntries = [...allEntries].sort((a, b) =>
@@ -498,7 +498,7 @@ export default function FichajeScreen() {
         (e.entry_type === 'ENTRADA' || e.entry_type === 'ENTRADA_2') &&
         sortedEntries.indexOf(e) <= sortedEntries.indexOf(entry)
       );
-      return `${entradasBeforeThis.length}ª Entrada`;
+      return t('fichaje.nthEntry', { n: entradasBeforeThis.length });
     }
 
     if (entry.entry_type === 'SALIDA' || entry.entry_type === 'SALIDA_2') {
@@ -506,7 +506,7 @@ export default function FichajeScreen() {
         (e.entry_type === 'SALIDA' || e.entry_type === 'SALIDA_2') &&
         sortedEntries.indexOf(e) <= sortedEntries.indexOf(entry)
       );
-      return `${salidasBeforeThis.length}ª Salida`;
+      return t('fichaje.nthExit', { n: salidasBeforeThis.length });
     }
 
     return entry.entry_type;
@@ -583,9 +583,29 @@ export default function FichajeScreen() {
 
   // Formatear fecha
   const formatDate = (date: Date) => {
-    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const days = [
+      t('fichaje.days.sunday'),
+      t('fichaje.days.monday'),
+      t('fichaje.days.tuesday'),
+      t('fichaje.days.wednesday'),
+      t('fichaje.days.thursday'),
+      t('fichaje.days.friday'),
+      t('fichaje.days.saturday')
+    ];
+    const months = [
+      t('fichaje.months.january'),
+      t('fichaje.months.february'),
+      t('fichaje.months.march'),
+      t('fichaje.months.april'),
+      t('fichaje.months.may'),
+      t('fichaje.months.june'),
+      t('fichaje.months.july'),
+      t('fichaje.months.august'),
+      t('fichaje.months.september'),
+      t('fichaje.months.october'),
+      t('fichaje.months.november'),
+      t('fichaje.months.december')
+    ];
 
     const dayName = days[date.getDay()];
     const day = date.getDate();
@@ -690,7 +710,7 @@ export default function FichajeScreen() {
                     </View>
                     <View style={styles.buttonContent}>
                       <Text style={styles.buttonTitle}>{t('common.loading')}</Text>
-                      <Text style={styles.buttonSubtitle}>Por favor espera</Text>
+                      <Text style={styles.buttonSubtitle}>{t('fichaje.pleaseWait')}</Text>
                     </View>
                   </>
                 ) : (

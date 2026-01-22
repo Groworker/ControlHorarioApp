@@ -121,17 +121,17 @@ export default function SolicitudesScreen() {
     };
 
     const typeLabels: Record<EntryType, string> = {
-        'ENTRADA': 'Entrada',
-        'SALIDA': 'Salida',
-        'ENTRADA_2': 'Entrada T2',
-        'SALIDA_2': 'Salida T2',
-        'DESCANSO': 'Descanso',
+        'ENTRADA': t('solicitudes.entryTypes.entry'),
+        'SALIDA': t('solicitudes.entryTypes.exit'),
+        'ENTRADA_2': t('solicitudes.entryTypes.entry2'),
+        'SALIDA_2': t('solicitudes.entryTypes.exit2'),
+        'DESCANSO': t('solicitudes.entryTypes.break'),
     };
 
     const statusLabels = {
-        pending: 'Pendiente',
-        approved: 'Aprobada',
-        rejected: 'Rechazada',
+        pending: t('solicitudes.pending'),
+        approved: t('solicitudes.approved'),
+        rejected: t('solicitudes.rejected'),
     };
 
     const statusColors = {
@@ -208,9 +208,9 @@ export default function SolicitudesScreen() {
                 await loadRequests();
 
                 Alert.alert(
-                    '¡Solicitud enviada!',
-                    'Tu solicitud ha sido enviada y está pendiente de aprobación.',
-                    [{ text: 'OK' }]
+                    t('solicitudes.alerts.requestSent'),
+                    t('solicitudes.alerts.requestSentMessage'),
+                    [{ text: t('common.ok') }]
                 );
             } else {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -229,23 +229,23 @@ export default function SolicitudesScreen() {
         // Solo permitir eliminar solicitudes pendientes
         if (status !== 'pending') {
             Alert.alert(
-                'No se puede eliminar',
-                'Solo puedes eliminar solicitudes pendientes.',
-                [{ text: 'OK' }]
+                t('solicitudes.alerts.cannotDelete'),
+                t('solicitudes.alerts.cannotDeleteMessage'),
+                [{ text: t('common.ok') }]
             );
             return;
         }
 
         Alert.alert(
-            'Eliminar Solicitud',
-            '¿Estás seguro de que quieres eliminar esta solicitud?',
+            t('solicitudes.alerts.deleteRequest'),
+            t('solicitudes.alerts.deleteRequestMessage'),
             [
                 {
-                    text: 'Cancelar',
+                    text: t('common.cancel'),
                     style: 'cancel'
                 },
                 {
-                    text: 'Eliminar',
+                    text: t('common.delete'),
                     style: 'destructive',
                     onPress: async () => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -309,12 +309,12 @@ export default function SolicitudesScreen() {
         if (selectedIds.length === 0) return;
 
         Alert.alert(
-            'Eliminar Solicitudes',
-            `¿Estás seguro de que quieres eliminar ${selectedIds.length} solicitud(es)?`,
+            t('solicitudes.alerts.deleteRequests'),
+            t('solicitudes.alerts.deleteRequestsMessage', { count: selectedIds.length }),
             [
-                { text: 'Cancelar', style: 'cancel' },
+                { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: 'Eliminar',
+                    text: t('common.delete'),
                     style: 'destructive',
                     onPress: async () => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -396,9 +396,9 @@ export default function SolicitudesScreen() {
                 await loadRequests();
 
                 Alert.alert(
-                    '¡Solicitud actualizada!',
-                    'Tu solicitud ha sido actualizada correctamente.',
-                    [{ text: 'OK' }]
+                    t('solicitudes.alerts.requestUpdated'),
+                    t('solicitudes.alerts.requestUpdatedMessage'),
+                    [{ text: t('common.ok') }]
                 );
             } else {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -429,16 +429,16 @@ export default function SolicitudesScreen() {
                         setEditingRequest(null);
                         setReason('');
                     }}>
-                        <Text style={styles.backButton}>← Volver</Text>
+                        <Text style={styles.backButton}>{t('solicitudes.back')}</Text>
                     </TouchableOpacity>
-                    <Text style={styles.title}>{editingRequest ? 'Editar Solicitud' : 'Nueva Solicitud'}</Text>
+                    <Text style={styles.title}>{editingRequest ? t('solicitudes.editRequest') : t('solicitudes.newRequest')}</Text>
                     <View style={{ width: 20 }} />
                 </View>
 
                 <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                     {/* Tipo de fichaje */}
                     <View style={styles.formGroup}>
-                        <Text style={styles.label}>Tipo de Fichaje</Text>
+                        <Text style={styles.label}>{t('solicitudes.form.clockType')}</Text>
 
                         <View style={styles.typeRow}>
                             <TouchableOpacity
@@ -446,14 +446,14 @@ export default function SolicitudesScreen() {
                                 onPress={() => { setSelectedType('ENTRADA'); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                                 activeOpacity={0.7}
                             >
-                                <Text style={[styles.typeButtonText, selectedType === 'ENTRADA' && styles.typeButtonTextActive]}>Entrada</Text>
+                                <Text style={[styles.typeButtonText, selectedType === 'ENTRADA' && styles.typeButtonTextActive]}>{t('solicitudes.entryTypes.entry')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.typeButton, selectedType === 'SALIDA' && styles.typeButtonActive]}
                                 onPress={() => { setSelectedType('SALIDA'); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                                 activeOpacity={0.7}
                             >
-                                <Text style={[styles.typeButtonText, selectedType === 'SALIDA' && styles.typeButtonTextActive]}>Salida</Text>
+                                <Text style={[styles.typeButtonText, selectedType === 'SALIDA' && styles.typeButtonTextActive]}>{t('solicitudes.entryTypes.exit')}</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -463,14 +463,14 @@ export default function SolicitudesScreen() {
                                 onPress={() => { setSelectedType('ENTRADA_2'); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                                 activeOpacity={0.7}
                             >
-                                <Text style={[styles.typeButtonText, selectedType === 'ENTRADA_2' && styles.typeButtonTextActive]}>Entrada T2</Text>
+                                <Text style={[styles.typeButtonText, selectedType === 'ENTRADA_2' && styles.typeButtonTextActive]}>{t('solicitudes.entryTypes.entry2')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.typeButton, selectedType === 'SALIDA_2' && styles.typeButtonActive]}
                                 onPress={() => { setSelectedType('SALIDA_2'); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                                 activeOpacity={0.7}
                             >
-                                <Text style={[styles.typeButtonText, selectedType === 'SALIDA_2' && styles.typeButtonTextActive]}>Salida T2</Text>
+                                <Text style={[styles.typeButtonText, selectedType === 'SALIDA_2' && styles.typeButtonTextActive]}>{t('solicitudes.entryTypes.exit2')}</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -480,14 +480,14 @@ export default function SolicitudesScreen() {
                                 onPress={() => { setSelectedType('DESCANSO'); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                                 activeOpacity={0.7}
                             >
-                                <Text style={[styles.typeButtonText, selectedType === 'DESCANSO' && styles.typeButtonTextActive]}>Descanso</Text>
+                                <Text style={[styles.typeButtonText, selectedType === 'DESCANSO' && styles.typeButtonTextActive]}>{t('solicitudes.entryTypes.break')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
 
                     {/* Fecha */}
                     <View style={styles.formGroup}>
-                        <Text style={styles.label}>Fecha</Text>
+                        <Text style={styles.label}>{t('solicitudes.form.date')}</Text>
                         <TouchableOpacity
                             style={styles.dateButton}
                             onPress={openDatePicker}
@@ -501,7 +501,7 @@ export default function SolicitudesScreen() {
 
                     {/* Hora - igual que calculadora */}
                     <View style={styles.formGroup}>
-                        <Text style={styles.label}>Hora</Text>
+                        <Text style={styles.label}>{t('solicitudes.form.time')}</Text>
                         <View style={styles.timePicker}>
                             <View style={styles.timePickerRow}>
                                 <TouchableOpacity
@@ -525,12 +525,12 @@ export default function SolicitudesScreen() {
 
                     {/* Motivo */}
                     <View style={styles.formGroup}>
-                        <Text style={styles.label}>Motivo</Text>
+                        <Text style={styles.label}>{t('solicitudes.reason')}</Text>
                         <TextInput
                             style={styles.textArea}
                             value={reason}
                             onChangeText={setReason}
-                            placeholder="Explica por qué olvidaste fichar..."
+                            placeholder={t('solicitudes.form.reasonPlaceholder')}
                             placeholderTextColor={Colors.light.textSecondary}
                             multiline
                             numberOfLines={4}
@@ -548,7 +548,7 @@ export default function SolicitudesScreen() {
                             <ActivityIndicator color="#FFFFFF" />
                         ) : (
                             <Text style={styles.submitButtonText}>
-                                {editingRequest ? 'Actualizar Solicitud' : 'Enviar Solicitud'}
+                                {editingRequest ? t('solicitudes.form.update') : t('solicitudes.form.submit')}
                             </Text>
                         )}
                     </TouchableOpacity>
@@ -567,13 +567,13 @@ export default function SolicitudesScreen() {
                         <View style={styles.modalContent}>
                             <View style={styles.modalHeader}>
                                 <TouchableOpacity onPress={() => setPickerVisible(false)}>
-                                    <Text style={styles.modalCancel}>Cancelar</Text>
+                                    <Text style={styles.modalCancel}>{t('common.cancel')}</Text>
                                 </TouchableOpacity>
                                 <Text style={styles.modalTitle}>
-                                    {pickerType === 'hour' ? 'Seleccionar Hora' : 'Seleccionar Minutos'}
+                                    {pickerType === 'hour' ? t('solicitudes.form.selectHour') : t('solicitudes.form.selectMinutes')}
                                 </Text>
                                 <TouchableOpacity onPress={confirmTimePicker}>
-                                    <Text style={styles.modalConfirm}>Listo</Text>
+                                    <Text style={styles.modalConfirm}>{t('common.ready')}</Text>
                                 </TouchableOpacity>
                             </View>
                             <ScrollView style={styles.pickerScroll}>
@@ -611,18 +611,18 @@ export default function SolicitudesScreen() {
                         <View style={styles.modalContent}>
                             <View style={styles.modalHeader}>
                                 <TouchableOpacity onPress={() => setDatePickerVisible(false)}>
-                                    <Text style={styles.modalCancel}>Cancelar</Text>
+                                    <Text style={styles.modalCancel}>{t('common.cancel')}</Text>
                                 </TouchableOpacity>
-                                <Text style={styles.modalTitle}>Seleccionar Fecha</Text>
+                                <Text style={styles.modalTitle}>{t('solicitudes.form.selectDate')}</Text>
                                 <TouchableOpacity onPress={confirmDatePicker}>
-                                    <Text style={styles.modalConfirm}>Listo</Text>
+                                    <Text style={styles.modalConfirm}>{t('common.ready')}</Text>
                                 </TouchableOpacity>
                             </View>
 
                             <View style={styles.datePickerContainer}>
                                 {/* Columna Día */}
                                 <View style={styles.datePickerColumn}>
-                                    <Text style={styles.datePickerColumnLabel}>Día</Text>
+                                    <Text style={styles.datePickerColumnLabel}>{t('solicitudes.form.day')}</Text>
                                     <ScrollView ref={dayScrollRef} style={styles.pickerScroll}>
                                         {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                                             <TouchableOpacity
@@ -647,7 +647,7 @@ export default function SolicitudesScreen() {
 
                                 {/* Columna Mes */}
                                 <View style={styles.datePickerColumn}>
-                                    <Text style={styles.datePickerColumnLabel}>Mes</Text>
+                                    <Text style={styles.datePickerColumnLabel}>{t('solicitudes.form.month')}</Text>
                                     <ScrollView ref={monthScrollRef} style={styles.pickerScroll}>
                                         {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
                                             <TouchableOpacity
@@ -709,28 +709,28 @@ export default function SolicitudesScreen() {
                 {isSelectionMode ? (
                     <>
                         <TouchableOpacity onPress={cancelSelection} style={styles.headerButton}>
-                            <Text style={styles.cancelButton}>Cancelar</Text>
+                            <Text style={styles.cancelButton}>{t('common.cancel')}</Text>
                         </TouchableOpacity>
                         <View style={styles.selectionTitleContainer}>
-                            <Text style={styles.selectionTitle}>{selectedIds.length} seleccionada(s)</Text>
+                            <Text style={styles.selectionTitle}>{t('solicitudes.selected', { count: selectedIds.length })}</Text>
                         </View>
                         <TouchableOpacity
                             style={styles.deleteButton}
                             onPress={deleteSelected}
                             activeOpacity={0.8}
                         >
-                            <Text style={styles.deleteButtonText}>Eliminar</Text>
+                            <Text style={styles.deleteButtonText}>{t('common.delete')}</Text>
                         </TouchableOpacity>
                     </>
                 ) : (
                     <>
-                        <Text style={styles.title}>Solicitudes</Text>
+                        <Text style={styles.title}>{t('solicitudes.title')}</Text>
                         <TouchableOpacity
                             style={styles.newButton}
                             onPress={() => setShowNewRequest(true)}
                             activeOpacity={0.8}
                         >
-                            <Text style={styles.newButtonText}>+ Nueva</Text>
+                            <Text style={styles.newButtonText}>{t('solicitudes.new')}</Text>
                         </TouchableOpacity>
                     </>
                 )}
@@ -740,12 +740,12 @@ export default function SolicitudesScreen() {
                 {isFetching ? (
                     <View style={styles.loadingState}>
                         <ActivityIndicator size="large" color={Colors.light.primary} />
-                        <Text style={styles.loadingText}>Cargando solicitudes...</Text>
+                        <Text style={styles.loadingText}>{t('solicitudes.loadingRequests')}</Text>
                     </View>
                 ) : requests.length === 0 ? (
                     <View style={styles.emptyState}>
-                        <Text style={styles.emptyText}>No hay solicitudes</Text>
-                        <Text style={styles.emptySubtext}>Crea una nueva solicitud para registrar un fichaje olvidado</Text>
+                        <Text style={styles.emptyText}>{t('solicitudes.noRequests')}</Text>
+                        <Text style={styles.emptySubtext}>{t('solicitudes.noRequestsSubtext')}</Text>
                     </View>
                 ) : (
                     requests.map((request) => {
@@ -800,7 +800,7 @@ export default function SolicitudesScreen() {
                                                 onPress={() => startEdit(request)}
                                                 activeOpacity={0.7}
                                             >
-                                                <Text style={styles.editButtonText}>✏️ Editar</Text>
+                                                <Text style={styles.editButtonText}>✏️ {t('common.edit')}</Text>
                                             </TouchableOpacity>
                                         )}
                                     </View>

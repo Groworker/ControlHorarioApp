@@ -86,12 +86,12 @@ export const dashboardService = {
             });
 
             // Calculate expected hours for the period
-            const expectedDays = this.getWorkingDaysInPeriod(from, to);
-            const dailyExpectedHours = weeklyHours / 5; // Assuming 5-day work week
+            const expectedDays = this.getTotalDaysInPeriod(from, to);
+            const dailyExpectedHours = weeklyHours / 7; // Daily average including weekends
             const expectedTotalMinutes = expectedDays * dailyExpectedHours * 60;
 
-            // Calculate overtime
-            const overtimeMinutes = Math.max(0, totalWorkedMinutes - expectedTotalMinutes);
+            // Calculate overtime (can be negative for deficit)
+            const overtimeMinutes = totalWorkedMinutes - expectedTotalMinutes;
 
             // Calculate attendance rate
             const attendanceRate = expectedDays > 0 ? (daysWorked / expectedDays) * 100 : 0;
@@ -292,22 +292,12 @@ export const dashboardService = {
     },
 
     /**
-     * Helper: Get working days in period (excluding weekends)
+     * Helper: Get total days in period (all calendar days)
      */
-    getWorkingDaysInPeriod(start: Date, end: Date): number {
-        let count = 0;
-        const current = new Date(start);
-
-        while (current <= end) {
-            const dayOfWeek = current.getDay();
-            // Count Monday-Friday (1-5)
-            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-                count++;
-            }
-            current.setDate(current.getDate() + 1);
-        }
-
-        return count;
+    getTotalDaysInPeriod(start: Date, end: Date): number {
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end
+        return diffDays;
     },
 
     /**

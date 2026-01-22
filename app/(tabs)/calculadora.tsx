@@ -127,7 +127,7 @@ export default function CalculadoraScreen() {
                         activeOpacity={0.7}
                     >
                         <Text style={[styles.toggleText, shiftType === 'single' && styles.toggleTextActive]}>
-                            Turno Simple
+                            {t('calculadora.shiftTypes.single')}
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -136,7 +136,7 @@ export default function CalculadoraScreen() {
                         activeOpacity={0.7}
                     >
                         <Text style={[styles.toggleText, shiftType === 'split' && styles.toggleTextActive]}>
-                            Turno Partido
+                            {t('calculadora.shiftTypes.split')}
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -144,7 +144,7 @@ export default function CalculadoraScreen() {
                 {/* Turno 1 */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>
-                        {shiftType === 'split' ? 'PRIMER TURNO' : 'HORARIO LABORAL'}
+                        {shiftType === 'split' ? t('calculadora.shifts.first') : t('calculadora.shifts.schedule')}
                     </Text>
                     <View style={styles.timeRow}>
                         <TimePicker
@@ -167,7 +167,7 @@ export default function CalculadoraScreen() {
                 {/* Turno 2 */}
                 {shiftType === 'split' && (
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>SEGUNDO TURNO</Text>
+                        <Text style={styles.sectionTitle}>{t('calculadora.shifts.second')}</Text>
                         <View style={styles.timeRow}>
                             <TimePicker
                                 hour={start2Hour}
@@ -208,7 +208,7 @@ export default function CalculadoraScreen() {
 
                 {/* Resultado */}
                 <View style={styles.result}>
-                    <Text style={styles.resultLabel}>TOTAL</Text>
+                    <Text style={styles.resultLabel}>{t('calculadora.total')}</Text>
                     <View style={styles.resultValue}>
                         <Text style={styles.resultNum}>{totalH}</Text>
                         <Text style={styles.resultUnit}>h</Text>
@@ -232,7 +232,7 @@ export default function CalculadoraScreen() {
                                 <Text style={styles.modalCancel}>{t('common.cancel')}</Text>
                             </TouchableOpacity>
                             <Text style={styles.modalTitle}>
-                                {pickerType === 'hour' ? 'Seleccionar Hora' : 'Seleccionar Minutos'}
+                                {pickerType === 'hour' ? t('calculadora.selectHour') : t('calculadora.selectMinutes')}
                             </Text>
                             <TouchableOpacity onPress={() => confirmPicker(currentValue)}>
                                 <Text style={styles.modalConfirm}>{t('common.confirm')}</Text>

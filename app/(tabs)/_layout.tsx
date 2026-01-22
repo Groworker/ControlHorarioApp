@@ -1,21 +1,24 @@
 import { usePathname, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTranslation } from 'react-i18next';
 
 // Import all tab screens
 import CalculadoraScreen from './calculadora';
 import CalendarioScreen from './calendario';
+import DashboardScreen from './dashboard';
 import FichajeScreen from './fichaje';
 import PerfilScreen from './perfil';
 import SolicitudesScreen from './solicitudes';
 
 export default function TabLayout() {
+  const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const router = useRouter();
   const pathname = usePathname();
@@ -24,11 +27,12 @@ export default function TabLayout() {
 
   // Tab configuration
   const tabs = [
-    { name: 'fichaje', title: 'Fichaje', icon: 'house.fill', component: FichajeScreen },
-    { name: 'calendario', title: 'Calendario', icon: 'calendar', component: CalendarioScreen },
-    { name: 'calculadora', title: 'Calculadora', icon: 'number.square.fill', component: CalculadoraScreen },
-    { name: 'solicitudes', title: 'Solicitudes', icon: 'doc.text.fill', component: SolicitudesScreen },
-    { name: 'perfil', title: 'Perfil', icon: 'person.fill', component: PerfilScreen },
+    { name: 'fichaje', title: t('fichaje.title'), icon: 'house.fill', component: FichajeScreen },
+    { name: 'dashboard', title: 'Dashboard', icon: 'chart.bar.fill', component: DashboardScreen },
+    { name: 'calendario', title: t('calendario.title'), icon: 'calendar', component: CalendarioScreen },
+    { name: 'calculadora', title: t('calculadora.title'), icon: 'number.square.fill', component: CalculadoraScreen },
+    { name: 'solicitudes', title: t('solicitudes.title'), icon: 'doc.text.fill', component: SolicitudesScreen },
+    { name: 'perfil', title: t('perfil.title'), icon: 'person.fill', component: PerfilScreen },
   ];
 
   // Sync current page with URL
@@ -94,20 +98,10 @@ export default function TabLayout() {
           >
             <View style={styles.tabContent}>
               <IconSymbol
-                size={28}
+                size={30}
                 name={tab.icon as any}
                 color={currentPage === index ? Colors[colorScheme ?? 'light'].tint : Colors[colorScheme ?? 'light'].tabIconDefault}
               />
-              <Animated.Text
-                style={[
-                  styles.tabLabel,
-                  {
-                    color: currentPage === index ? Colors[colorScheme ?? 'light'].tint : Colors[colorScheme ?? 'light'].tabIconDefault,
-                  },
-                ]}
-              >
-                {tab.title}
-              </Animated.Text>
             </View>
           </HapticTab>
         ))}

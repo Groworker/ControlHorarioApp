@@ -257,6 +257,19 @@
         "retry": "Wiederholen",
         "selectPosition": "Position auswählen",
         "selectBirthDate": "Geburtsdatum auswählen",
+        "weeklyHours": "Wochenstunden",
+        "hours": "Stunden",
+        "positions": {
+            "director": "Direktor/in",
+            "headChef": "Küchenchef",
+            "chefDePartie": "Chef de Partie",
+            "sousChef": "Sous Chef",
+            "kitchenAssistant": "Küchenhelfer",
+            "headWaiter": "Oberkellner/in",
+            "waiter": "Kellner/in",
+            "housekeepingManager": "Housekeeping-Manager",
+            "housekeeping": "Housekeeping"
+        },
         "errors": {
             "emptyField": "Dieses Feld darf nicht leer sein",
             "invalidEmail": "Bitte geben Sie eine gültige E-Mail ein",

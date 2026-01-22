@@ -90,13 +90,37 @@ export default function CalendarioScreen() {
             const start = weekDays[0];
             const end = weekDays[6];
 
-            const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun',
-                'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+            const months = [
+                t('calendario.monthsShort.january'),
+                t('calendario.monthsShort.february'),
+                t('calendario.monthsShort.march'),
+                t('calendario.monthsShort.april'),
+                t('calendario.monthsShort.may'),
+                t('calendario.monthsShort.june'),
+                t('calendario.monthsShort.july'),
+                t('calendario.monthsShort.august'),
+                t('calendario.monthsShort.september'),
+                t('calendario.monthsShort.october'),
+                t('calendario.monthsShort.november'),
+                t('calendario.monthsShort.december')
+            ];
 
             return `${start.getDate()} ${months[start.getMonth()]} - ${end.getDate()} ${months[end.getMonth()]} ${end.getFullYear()}`;
         } else {
-            const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const months = [
+                t('calendario.months.january'),
+                t('calendario.months.february'),
+                t('calendario.months.march'),
+                t('calendario.months.april'),
+                t('calendario.months.may'),
+                t('calendario.months.june'),
+                t('calendario.months.july'),
+                t('calendario.months.august'),
+                t('calendario.months.september'),
+                t('calendario.months.october'),
+                t('calendario.months.november'),
+                t('calendario.months.december')
+            ];
             return `${months[selectedMonth.getMonth()]} ${selectedMonth.getFullYear()}`;
         }
     };
@@ -171,8 +195,24 @@ export default function CalendarioScreen() {
 
     const weekDays = getWeekDays();
     const monthDays = getMonthDays();
-    const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    const shortDayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+    const dayNames = [
+        t('calendario.days.monday'),
+        t('calendario.days.tuesday'),
+        t('calendario.days.wednesday'),
+        t('calendario.days.thursday'),
+        t('calendario.days.friday'),
+        t('calendario.days.saturday'),
+        t('calendario.days.sunday')
+    ];
+    const shortDayNames = [
+        t('calendario.daysShort.monday'),
+        t('calendario.daysShort.tuesday'),
+        t('calendario.daysShort.wednesday'),
+        t('calendario.daysShort.thursday'),
+        t('calendario.daysShort.friday'),
+        t('calendario.daysShort.saturday'),
+        t('calendario.daysShort.sunday')
+    ];
 
     return (
         <View style={styles.container}>
@@ -226,13 +266,13 @@ export default function CalendarioScreen() {
                     <View style={styles.table}>
                         <View style={styles.tableHeader}>
                             <View style={[styles.tableHeaderCell, { flex: 1.2 }]}>
-                                <Text style={styles.tableHeaderText}>Día</Text>
+                                <Text style={styles.tableHeaderText}>{t('calendario.table.day')}</Text>
                             </View>
                             <View style={[styles.tableHeaderCell, { flex: 1.5 }]}>
-                                <Text style={styles.tableHeaderText}>Fecha</Text>
+                                <Text style={styles.tableHeaderText}>{t('calendario.table.date')}</Text>
                             </View>
                             <View style={styles.tableHeaderCell}>
-                                <Text style={styles.tableHeaderText}>Horas</Text>
+                                <Text style={styles.tableHeaderText}>{t('calendario.table.hours')}</Text>
                             </View>
                         </View>
 
