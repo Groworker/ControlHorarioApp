@@ -10,10 +10,13 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTranslation } from 'react-i18next';
 
 // Import all tab screens
+import { authService } from '@/services/auth.service';
+import AdminScreen from './admin';
 import CalculadoraScreen from './calculadora';
 import CalendarioScreen from './calendario';
 import DashboardScreen from './dashboard';
 import FichajeScreen from './fichaje';
+import HorariosScreen from './horarios';
 import PerfilScreen from './perfil';
 import SolicitudesScreen from './solicitudes';
 
@@ -24,16 +27,42 @@ export default function TabLayout() {
   const pathname = usePathname();
   const pagerRef = useRef<PagerView>(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin
+  useEffect(() => {
+    checkAdminStatus();
+  }, []);
+
+  const checkAdminStatus = async () => {
+    try {
+      const user = await authService.getCurrentUser();
+      if (user && (user.role === 'admin' || user.role === 'supervisor')) {
+        setIsAdmin(true);
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  };
 
   // Tab configuration
-  const tabs = [
+  const workerTabs = [
     { name: 'fichaje', title: t('fichaje.title'), icon: 'house.fill', component: FichajeScreen },
     { name: 'dashboard', title: 'Dashboard', icon: 'chart.bar.fill', component: DashboardScreen },
     { name: 'calendario', title: t('calendario.title'), icon: 'calendar', component: CalendarioScreen },
+    { name: 'horarios', title: t('horarios.title'), icon: 'clock.fill', component: HorariosScreen },
     { name: 'calculadora', title: t('calculadora.title'), icon: 'number.square.fill', component: CalculadoraScreen },
     { name: 'solicitudes', title: t('solicitudes.title'), icon: 'doc.text.fill', component: SolicitudesScreen },
     { name: 'perfil', title: t('perfil.title'), icon: 'person.fill', component: PerfilScreen },
   ];
+
+  const adminTabs = [
+    { name: 'admin', title: t('admin.title'), icon: 'shield.fill', component: AdminScreen },
+    { name: 'perfil', title: t('perfil.title'), icon: 'person.fill', component: PerfilScreen },
+  ];
+
+  // Show only admin and perfil tabs for admins, all other tabs for workers
+  const tabs = isAdmin ? adminTabs : workerTabs;
 
   // Sync current page with URL
   useEffect(() => {

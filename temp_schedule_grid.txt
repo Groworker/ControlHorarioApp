@@ -1,0 +1,191 @@
+// Schedule Grid Implementation Component
+// This will be integrated into admin.tsx
+
+// Helper functions for the grid
+const getWeekDays = (startDate: Date): Date[] => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+        const day = new Date(startDate);
+        day.setDate(startDate.getDate() + i);
+        days.push(day);
+    }
+    return days;
+};
+
+const formatDateShort = (date: Date): string => {
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    return `${days[date.getDay()]} ${date.getDate()}/${date.getMonth() + 1}`;
+};
+
+const getSchedulesForEmployeeAndDate = (
+    userId: string,
+    date: string,
+    schedules: any[]
+): any[] => {
+    return schedules.filter(s => s.user_id === userId && s.date === date);
+};
+
+// Main render function for schedules tab
+const renderSchedulesTab = () => {
+    const weekDays = getWeekDays(currentWeekStart);
+    const weekEnd = new Date(currentWeekStart);
+    weekEnd.setDate(currentWeekStart.getDate() + 6);
+    
+    const formatWeekRange = () => {
+        const start = currentWeekStart.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const end = weekEnd.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return `${start} - ${end}`;
+    };
+
+    const handlePreviousWeek = () => {
+        const newStart = new Date(currentWeekStart);
+        newStart.setDate(currentWeekStart.getDate() - 7);
+        setCurrentWeekStart(newStart);
+    };
+
+    const handleNextWeek = () => {
+        const newStart = new Date(currentWeekStart);
+        newStart.setDate(currentWeekStart.getDate() + 7);
+        setCurrentWeekStart(newStart);
+    };
+
+    const handleToday = () => {
+        setCurrentWeekStart(getWeekStart(new Date()));
+    };
+
+    const handleCellPress = (employee: any, date: Date) => {
+        setSelectedEmployee(employee);
+        setSelectedScheduleDate(date.toISOString().split('T')[0]);
+        
+        // Load existing schedules for this employee and date
+        const dateStr = date.toISOString().split('T')[0];
+        const existing = getSchedulesForEmployeeAndDate(employee.id, dateStr, weekSchedules);
+        setEditingSchedules(existing);
+        setShowScheduleEditor(true);
+    };
+
+    return (
+        <View style={styles.tabContent}>
+            {/* Week Navigator */}
+            <View style={styles.weekNavigator}>
+                <View style={styles.weekHeader}>
+                    <Text style={styles.weekTitle}>Semana: {formatWeekRange()}</Text>
+                    <TouchableOpacity onPress={handleToday} style={styles.todayButton}>
+                        <Text style={styles.todayButtonText}>Hoy</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.weekButtons}>
+                    <TouchableOpacity onPress={handlePreviousWeek} style={styles.weekButton}>
+                        <Ionicons name="chevron-back" size={24} color={Colors.light.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleNextWeek} style={styles.weekButton}>
+                        <Ionicons name="chevron-forward" size={24} color={Colors.light.primary} />
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            {/* Group Filter */}
+            <View style={styles.groupSelector}>
+                <TouchableOpacity
+                    style={[styles.groupChip, scheduleGroup === 'all' && styles.groupChipActive]}
+                    onPress={() => { setScheduleGroup('all'); }}
+                >
+                    <Text style={[styles.groupChipText, scheduleGroup === 'all' && styles.groupChipTextActive]}>
+                        Todos
+                    </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.groupChip, scheduleGroup === 'cocina' && styles.groupChipActive]}
+                    onPress={() => { setScheduleGroup('cocina'); }}
+                >
+                    <Text style={[styles.groupChipText, scheduleGroup === 'cocina' && styles.groupChipTextActive]}>
+                        Cocina
+                    </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.groupChip, scheduleGroup === 'resto' && styles.groupChipActive]}
+                    onPress={() => { setScheduleGroup('resto'); }}
+                >
+                    <Text style={[styles.groupChipText, scheduleGroup === 'resto' && styles.groupChipTextActive]}>
+                        Resto
+                    </Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* Loading State */}
+            {isFetching ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={Colors.light.primary} />
+                    <Text style={styles.loadingText}>Cargando horarios...</Text>
+                </View>
+            ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View>
+                        {/* Header Row - Days of Week */}
+                        <View style={styles.gridHeaderRow}>
+                            <View style={styles.employeeNameColumn}>
+                                <Text style={styles.gridHeaderText}>Empleado</Text>
+                            </View>
+                            {weekDays.map((day, idx) => (
+                                <View key={idx} style={styles.dayColumn}>
+                                    <Text style={styles.gridHeaderText}>{formatDateShort(day)}</Text>
+                                </View>
+                            ))}
+                        </View>
+
+                        {/* Employee Rows */}
+                        <ScrollView style={styles.gridScrollView}>
+                            {scheduleEmployees.map((employee) => (
+                                <View key={employee.id} style={styles.gridRow}>
+                                    {/* Employee Name Cell */}
+                                    <View style={styles.employeeNameCell}>
+                                        <Text style={styles.employeeNameText} numberOfLines={1}>
+                                            {employee.full_name}
+                                        </Text>
+                                        <Text style={styles.employeeCodeText}>
+                                            {employee.employee_code}
+                                        </Text>
+                                    </View>
+
+                                    {/* Day Cells */}
+                                    {weekDays.map((day, idx) => {
+                                        const dateStr = day.toISOString().split('T')[0];
+                                        const daySchedules = getSchedulesForEmployeeAndDate(
+                                            employee.id,
+                                            dateStr,
+                                            weekSchedules
+                                        );
+
+                                        return (
+                                            <TouchableOpacity
+                                                key={idx}
+                                                style={[
+                                                    styles.dayCell,
+                                                    daySchedules.some(s => s.is_day_off) && styles.dayCellOff
+                                                ]}
+                                                onPress={() => handleCellPress(employee, day)}
+                                                activeOpacity={0.7}
+                                            >
+                                                {daySchedules.length === 0 ? (
+                                                    <Text style={styles.addIcon}>+</Text>
+                                                ) : (
+                                                    <>
+                                                        {daySchedules.map((schedule, sIdx) => (
+                                                            <Text key={sIdx} style={styles.scheduleTime} numberOfLines={1}>
+                                                                {schedule.start_time.substring(0, 5)}-{schedule.end_time.substring(0, 5)}
+                                                            </Text>
+                                                        ))}
+                                                    </>
+                                                )}
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </ScrollView>
+            )}
+        </View>
+    );
+};

@@ -1,0 +1,154 @@
+// Schedule Editor Modal Implementation
+// This will be added to admin.tsx before the closing View tag
+
+const renderScheduleEditorModal = () => {
+    const handleAddShift = () => {
+        setEditingSchedules([...editingSchedules, {
+            id: `temp_${Date.now()}`,
+            start_time: '09:00',
+            end_time: '17:00',
+            is_new: true
+        }]);
+    };
+
+    const handleDeleteShift = async (scheduleId: string) => {
+        if (scheduleId.startsWith('temp_')) {
+            // Just remove from local state
+            setEditingSchedules(editingSchedules.filter(s => s.id !== scheduleId));
+        } else {
+            // Delete from database
+            const result = await scheduleService.deleteScheduleById(scheduleId);
+            if (result.success) {
+                setEditingSchedules(editingSchedules.filter(s => s.id !== scheduleId));
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            } else {
+                Alert.alert('Error', 'No se pudo eliminar el turno');
+            }
+        }
+    };
+
+    const handleSaveSchedules = async () => {
+        if (!selectedEmployee || !selectedScheduleDate) return;
+
+        try {
+            // Get current user for created_by
+            const user = await authService.getCurrentUser();
+            
+            // Save or update each schedule
+            for (const schedule of editingSchedules) {
+                if (schedule.is_new || schedule.id.startsWith('temp_')) {
+                    // Create new schedule
+                    const scheduleData = {
+                        user_id: selectedEmployee.id,
+                        date: selectedScheduleDate,
+                        start_time: schedule.start_time,
+                        end_time: schedule.end_time,
+                        schedule_group: selectedEmployee.department === 'cocina' ? 'cocina' : 'resto',
+                        notes: schedule.notes || '',
+                        is_day_off: schedule.is_day_off || false,
+                    };
+                    
+                    await scheduleService.createSchedule(scheduleData);
+                } else {
+                    // Update existing (if needed)
+                    // For now, we'll skip updates and just handle create/delete
+                }
+            }
+
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setShowScheduleEditor(false);
+            loadScheduleData(); // Reload to show changes
+        } catch (error) {
+            console.error('Error saving schedules:', error);
+            Alert.alert('Error', 'No se pudieron guardar los horarios');
+        }
+    };
+
+    const updateShiftTime = (scheduleId: string, field: 'start_time' | 'end_time', value: string) => {
+        setEditingSchedules(editingSchedules.map(s => 
+            s.id === scheduleId ? { ...s, [field]: value } : s
+        ));
+    };
+
+    return (
+        <Modal
+            visible={showScheduleEditor}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowScheduleEditor(false)}
+        >
+            <View style={styles.modalOverlay}>
+                <View style={styles.scheduleEditorModal}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>
+                            Editar Horario: {selectedEmployee?.full_name}
+                        </Text>
+                        <Text style={styles.modalSubtitle}>
+                            {selectedScheduleDate ? new Date(selectedScheduleDate).toLocaleDateString('es-ES') : ''}
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setShowScheduleEditor(false)}
+                        >
+                            <Ionicons name="close" size={24} color={Colors.light.text} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView style={styles.scheduleEditorContent}>
+                        {editingSchedules.map((schedule, index) => (
+                            <View key={schedule.id} style={styles.shiftRow}>
+                                <Text style={styles.shiftLabel}>Turno {index + 1}</Text>
+                                <View style={styles.timeInputRow}>
+                                    <TextInput
+                                        style={styles.timeInput}
+                                        value={schedule.start_time}
+                                        onChangeText={(val) => updateShiftTime(schedule.id, 'start_time', val)}
+                                        placeholder="09:00"
+                                        keyboardType="numeric"
+                                    />
+                                    <Text style={styles.timeSeparator}>-</Text>
+                                    <TextInput
+                                        style={styles.timeInput}
+                                        value={schedule.end_time}
+                                        onChangeText={(val) => updateShiftTime(schedule.id, 'end_time', val)}
+                                        placeholder="17:00"
+                                        keyboardType="numeric"
+                                    />
+                                    <TouchableOpacity
+                                        style={styles.deleteShiftButton}
+                                        onPress={() => handleDeleteShift(schedule.id)}
+                                    >
+                                        <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        ))}
+
+                        <TouchableOpacity
+                            style={styles.addShiftButton}
+                            onPress={handleAddShift}
+                        >
+                            <Ionicons name="add-circle-outline" size={24} color={Colors.light.primary} />
+                            <Text style={styles.addShiftText}>Añadir turno</Text>
+                        </TouchableOpacity>
+                    </ScrollView>
+
+                    <View style={styles.modalFooter}>
+                        <TouchableOpacity
+                            style={styles.cancelButton}
+                            onPress={() => setShowScheduleEditor(false)}
+                        >
+                            <Text style={styles.cancelButtonText}>Cancelar</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.saveButton}
+                            onPress={handleSaveSchedules}
+                        >
+                            <Text style={styles.saveButtonText}>Guardar</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
+};

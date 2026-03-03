@@ -1,10 +1,12 @@
 import { Colors } from '@/constants/Colors';
 import { changeLanguage } from '@/i18n';
+import { authService } from '@/services/auth.service';
 import { profilePictureService } from '@/services/profile-picture.service';
 import { userService } from '@/services/user.service';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
@@ -48,6 +50,7 @@ const LANGUAGES = [
 
 export default function PerfilScreen() {
     const { t, i18n } = useTranslation();
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -478,6 +481,33 @@ export default function PerfilScreen() {
             <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
                     <Text style={styles.title}>{t('perfil.title')}</Text>
+                    <TouchableOpacity
+                        style={styles.logoutButton}
+                        onPress={async () => {
+                            Alert.alert(
+                                t('perfil.logout'),
+                                t('perfil.logoutConfirm'),
+                                [
+                                    {
+                                        text: t('common.cancel'),
+                                        style: 'cancel',
+                                    },
+                                    {
+                                        text: t('perfil.logout'),
+                                        style: 'destructive',
+                                        onPress: async () => {
+                                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                            await authService.logout();
+                                            router.replace('/');
+                                        },
+                                    },
+                                ],
+                            );
+                        }}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="log-out-outline" size={24} color={Colors.light.primary} />
+                    </TouchableOpacity>
                 </View>
 
                 {/* Foto y Nombre */}
@@ -1036,11 +1066,19 @@ const styles = StyleSheet.create({
         paddingTop: 83,
         borderBottomWidth: 1,
         borderBottomColor: Colors.light.border,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     title: {
         fontSize: 28,
         fontWeight: 'bold',
         color: Colors.light.text,
+    },
+    logoutButton: {
+        padding: 8,
+        borderRadius: 8,
+        backgroundColor: Colors.light.background,
     },
     profileSection: {
         alignItems: 'center',
