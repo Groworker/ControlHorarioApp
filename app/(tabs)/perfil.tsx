@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { CountryCode } from 'react-native-country-picker-modal';
 
-type EditField = 'name' | 'birth_date' | 'email' | 'phone' | 'department' | 'weekly_hours' | null;
+type EditField = 'name' | 'birth_date' | 'email' | 'phone' | 'department' | 'weekly_hours' | 'contract_start_date' | 'vacation_days_taken' | null;
 
 // Country codes with flags and names
 const COUNTRIES = [
@@ -83,6 +83,8 @@ export default function PerfilScreen() {
         department: string;
         avatar_url: string;
         weekly_hours: number;
+        contract_start_date: string;
+        vacation_days_taken: number;
     } | null>(null);
 
     // Date picker states
@@ -112,6 +114,8 @@ export default function PerfilScreen() {
                     department: user.department || '',
                     avatar_url: user.avatar_url || '',
                     weekly_hours: user.weekly_hours || 40,
+                    contract_start_date: user.contract_start_date || '',
+                    vacation_days_taken: typeof user.vacation_days_taken === 'number' ? user.vacation_days_taken : 0,
                 });
 
                 // Pre-fill form fields
@@ -136,13 +140,21 @@ export default function PerfilScreen() {
     const openEditModal = (field: EditField, currentValue: string) => {
         setEditingField(field);
 
-        if (field === 'birth_date' && currentValue) {
+        if ((field === 'birth_date' || field === 'contract_start_date') && currentValue) {
             // Parse date for date picker
             const date = new Date(currentValue);
             setSelectedDate({
                 day: date.getDate(),
                 month: date.getMonth() + 1,
                 year: date.getFullYear(),
+            });
+            setDatePickerVisible(true);
+        } else if (field === 'birth_date' || field === 'contract_start_date') {
+            const today = new Date();
+            setSelectedDate({
+                day: today.getDate(),
+                month: today.getMonth() + 1,
+                year: today.getFullYear(),
             });
             setDatePickerVisible(true);
         } else if (field === 'phone') {
@@ -160,6 +172,9 @@ export default function PerfilScreen() {
         } else if (field === 'weekly_hours') {
             // For weekly_hours, convert number to string
             setEditValue(userProfile?.weekly_hours ? String(userProfile.weekly_hours) : '');
+            setShowEditModal(true);
+        } else if (field === 'vacation_days_taken') {
+            setEditValue(userProfile?.vacation_days_taken !== undefined ? String(userProfile.vacation_days_taken) : '0');
             setShowEditModal(true);
         } else {
             setEditValue(currentValue);
@@ -193,6 +208,14 @@ export default function PerfilScreen() {
             }
         }
 
+        if (editingField === 'vacation_days_taken') {
+            const daysValue = parseFloat(valueToSave);
+            if (isNaN(daysValue) || daysValue < 0) {
+                Alert.alert(t('common.error'), 'Los días disfrutados deben ser un número válido');
+                return;
+            }
+        }
+
         setIsSaving(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -205,6 +228,8 @@ export default function PerfilScreen() {
                 'phone': 'phone',
                 'department': 'department',
                 'weekly_hours': 'weekly_hours',
+                'contract_start_date': 'contract_start_date',
+                'vacation_days_taken': 'vacation_days_taken',
             };
 
             const dbFieldName = editingField ? fieldMapping[editingField] || editingField : '';
@@ -212,6 +237,8 @@ export default function PerfilScreen() {
                 // Convert to number for weekly_hours
                 if (editingField === 'weekly_hours') {
                     updates[dbFieldName] = parseInt(valueToSave, 10);
+                } else if (editingField === 'vacation_days_taken') {
+                    updates[dbFieldName] = parseFloat(valueToSave);
                 } else {
                     updates[dbFieldName] = valueToSave;
                 }
@@ -233,6 +260,8 @@ export default function PerfilScreen() {
                     department: result.user.department || '',
                     avatar_url: result.user.avatar_url || '',
                     weekly_hours: result.user.weekly_hours || 40,
+                    contract_start_date: result.user.contract_start_date || '',
+                    vacation_days_taken: typeof result.user.vacation_days_taken === 'number' ? result.user.vacation_days_taken : 0,
                 });
                 setShowEditModal(false);
                 setEditingField(null);
@@ -319,25 +348,34 @@ export default function PerfilScreen() {
     };
 
     const saveBirthDate = async () => {
-        const birthDate = new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day);
-        const formattedDate = birthDate.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dateValue = new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day);
+
+        // Ajuste horario para mandar siempre la fecha correcta independientemente de la timezone local
+        dateValue.setMinutes(dateValue.getMinutes() - dateValue.getTimezoneOffset());
+        const formattedDate = dateValue.toISOString().split('T')[0]; // YYYY-MM-DD
 
         setIsSaving(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
-            const result = await userService.updateUserProfile({ birth_date: formattedDate });
+            // Apply it correctly depending on the exact mode of the DatePicker
+            const isContractDate = editingField === 'contract_start_date';
+            const propertyKey = isContractDate ? 'contract_start_date' : 'birth_date';
+            const updates = { [propertyKey]: formattedDate };
+
+            const result = await userService.updateUserProfile(updates);
 
             if (result.success && result.user) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                setUserProfile(prev => prev ? { ...prev, birth_date: formattedDate } : null);
+                setUserProfile(prev => prev ? { ...prev, [propertyKey]: formattedDate } : null);
                 setDatePickerVisible(false);
+                setEditingField(null);
             } else {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                 Alert.alert('Error', result.error || 'No se pudo guardar');
             }
         } catch (error) {
-            console.error('Error saving birth date:', error);
+            console.error(`Error saving ${editingField}:`, error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             Alert.alert(t('common.error'), t('perfil.errors.saveError'));
         } finally {
@@ -355,6 +393,22 @@ export default function PerfilScreen() {
             edad--;
         }
         return edad;
+    };
+
+    const calcularMesesTrabajados = (fechaInicio: string) => {
+        if (!fechaInicio) return 0;
+        const hoy = new Date();
+        const inicio = new Date(fechaInicio);
+
+        // Months difference formula: (year2 - year1) * 12 + (month2 - month1)
+        let meses = (hoy.getFullYear() - inicio.getFullYear()) * 12 + (hoy.getMonth() - inicio.getMonth());
+
+        // Adjust for day in month
+        if (hoy.getDate() < inicio.getDate()) {
+            meses--;
+        }
+
+        return Math.max(0, meses);
     };
 
     const handleAvatarUpload = async (source: 'gallery' | 'camera') => {
@@ -414,13 +468,15 @@ export default function PerfilScreen() {
     };
 
     const getFieldLabel = (field: EditField): string => {
-        const labels = {
+        const labels: Record<string, string> = {
             name: 'Nombre Completo',
             birth_date: 'Fecha de Nacimiento',
             email: 'Correo Electrónico',
             phone: 'Teléfono',
             department: 'Puesto',
             weekly_hours: 'Horas a la Semana',
+            contract_start_date: 'Inicio de Contrato',
+            vacation_days_taken: 'Días Gastados',
         };
         return field ? labels[field] : '';
     };
@@ -475,6 +531,17 @@ export default function PerfilScreen() {
     const birthDateDisplay = userProfile.birth_date
         ? `${formatDateDisplay(userProfile.birth_date)} (${t('perfil.years', { age: calcularEdad(userProfile.birth_date) })})`
         : t('perfil.notSpecified');
+
+    // Vacation Logic
+    const mesesTrabajados = calcularMesesTrabajados(userProfile.contract_start_date);
+    const accruedAbs = mesesTrabajados > 0 ? mesesTrabajados * 2.91666 : 0;
+    const diasGenerados = Number(accruedAbs.toFixed(2));
+    const diasDisfrutados = userProfile.vacation_days_taken || 0;
+    const diasDisponibles = Number((diasGenerados - diasDisfrutados).toFixed(2));
+
+    const contractDateDisplay = userProfile.contract_start_date
+        ? formatDateDisplay(userProfile.contract_start_date)
+        : 'Sin especificar';
 
     return (
         <>
@@ -592,6 +659,53 @@ export default function PerfilScreen() {
                     </View>
                 </View>
 
+                {/* Vacaciones */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Vacaciones</Text>
+                    <View style={styles.card}>
+                        <EditableInfoRow
+                            icon="calendar-outline"
+                            label="Inicio de Contrato"
+                            value={contractDateDisplay}
+                            field="contract_start_date"
+                        />
+                        <EditableInfoRow
+                            icon="airplane-outline"
+                            label="Días Disfrutados"
+                            value={String(diasDisfrutados)}
+                            field="vacation_days_taken"
+                        />
+
+                        <View style={styles.divider} />
+
+                        <View style={styles.vacationStatsGrid}>
+                            <View style={styles.vacationStatCol}>
+                                <Text style={styles.vacationStatNum}>{diasGenerados}</Text>
+                                <Text style={styles.vacationStatLabel}>Generados</Text>
+                            </View>
+                        </View>
+                    </View>
+                    <View style={[styles.card, { marginTop: 10, padding: 15 }]}>
+                        <View style={styles.vacationAvailableRow}>
+                            <View>
+                                <Text style={styles.vacationAvailableTitle}>Días Disponibles</Text>
+                                <Text style={styles.vacationAvailableSub}>Para disfrute o finiquito</Text>
+                            </View>
+                            <View style={[
+                                styles.vacationBadge,
+                                diasDisponibles < 0 ? styles.vacationBadgeNegative : styles.vacationBadgePositive
+                            ]}>
+                                <Text style={[
+                                    styles.vacationBadgeText,
+                                    diasDisponibles < 0 ? styles.vacationBadgeTextNegative : styles.vacationBadgeTextPositive
+                                ]}>
+                                    {diasDisponibles} días
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
                 {/* Configuración */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{t('perfil.configuration')}</Text>
@@ -634,7 +748,7 @@ export default function PerfilScreen() {
                             value={editValue}
                             onChangeText={setEditValue}
                             placeholder={`Ingresa ${getFieldLabel(editingField).toLowerCase()}`}
-                            keyboardType={editingField === 'email' ? 'email-address' : editingField === 'weekly_hours' ? 'numeric' : 'default'}
+                            keyboardType={(editingField === 'email') ? 'email-address' : (editingField === 'weekly_hours' || editingField === 'vacation_days_taken') ? 'numeric' : 'default'}
                             autoCapitalize={editingField === 'email' ? 'none' : 'words'}
                             autoFocus
                         />
@@ -1494,5 +1608,68 @@ const styles = StyleSheet.create({
     languageNameActive: {
         color: Colors.light.primary,
         fontWeight: '600',
+    },
+    // Nuevos estilos para Vacaciones
+    divider: {
+        height: 1,
+        backgroundColor: '#F1F5F9',
+        marginVertical: 12,
+        marginHorizontal: -20,
+    },
+    vacationStatsGrid: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingVertical: 10,
+    },
+    vacationStatCol: {
+        alignItems: 'center',
+        flex: 1,
+    },
+    vacationStatNum: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: Colors.light.primary,
+        marginBottom: 4,
+    },
+    vacationStatLabel: {
+        fontSize: 12,
+        color: Colors.light.textSecondary,
+        fontWeight: '500',
+    },
+    vacationAvailableRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    vacationAvailableTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: Colors.light.text,
+    },
+    vacationAvailableSub: {
+        fontSize: 12,
+        color: Colors.light.textSecondary,
+        marginTop: 2,
+    },
+    vacationBadge: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+    },
+    vacationBadgePositive: {
+        backgroundColor: '#DCFCE7', // Tailwind green-100
+    },
+    vacationBadgeNegative: {
+        backgroundColor: '#FEE2E2', // Tailwind red-100
+    },
+    vacationBadgeText: {
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    vacationBadgeTextPositive: {
+        color: '#166534', // Tailwind green-800
+    },
+    vacationBadgeTextNegative: {
+        color: '#991B1B', // Tailwind red-800
     },
 });

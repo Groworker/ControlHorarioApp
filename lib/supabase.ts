@@ -32,6 +32,8 @@ export interface User {
     created_at: string;
     updated_at: string;
     is_active: boolean;
+    contract_start_date?: string;
+    vacation_days_taken?: number;
 }
 
 export interface ClockEntry {

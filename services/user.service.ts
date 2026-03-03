@@ -43,6 +43,8 @@ export const userService = {
         department?: string;
         avatar_url?: string;
         weekly_hours?: number;
+        contract_start_date?: string;
+        vacation_days_taken?: number;
     }): Promise<{ success: boolean; user?: User; error?: string }> {
         try {
             const currentUser = await authService.getCurrentUser();
@@ -76,6 +78,8 @@ export const userService = {
             if (updates.department !== undefined) updateData.department = updates.department.trim();
             if (updates.avatar_url !== undefined) updateData.avatar_url = updates.avatar_url;
             if (updates.weekly_hours !== undefined) updateData.weekly_hours = updates.weekly_hours;
+            if (updates.contract_start_date !== undefined) updateData.contract_start_date = updates.contract_start_date;
+            if (updates.vacation_days_taken !== undefined) updateData.vacation_days_taken = updates.vacation_days_taken;
 
             updateData.updated_at = new Date().toISOString();
 
