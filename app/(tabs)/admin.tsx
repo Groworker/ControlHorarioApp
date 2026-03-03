@@ -3,6 +3,7 @@ import type { ClockEntry } from '@/lib/supabase';
 import type { RequestWithUser, WorkSummary } from '@/services/admin.service';
 import { adminService } from '@/services/admin.service';
 import { scheduleService } from '@/services/schedule.service';
+import { calculateDailyMetrics } from '@/utils/timeCalculator';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
@@ -445,25 +446,14 @@ export default function AdminScreen() {
         };
 
         const calculateDayHours = (dateKey: string) => {
-            const dayEntries = getDayEntries(dateKey);
-            if (dayEntries.length === 0) return 0;
+            const dayEntries = groupedEntries[dateKey];
+            if (!dayEntries || dayEntries.length === 0) return '00:00';
 
-            const sortedEntries = [...dayEntries].sort((a, b) =>
-                new Date(a.clock_time).getTime() - new Date(b.clock_time).getTime()
-            );
+            const metrics = calculateDailyMetrics(dayEntries);
+            const hours = Math.floor(metrics.workedMinutes / 60).toString().padStart(2, '0');
+            const minutes = Math.floor(metrics.workedMinutes % 60).toString().padStart(2, '0');
 
-            let totalMinutes = 0;
-            const entradas = sortedEntries.filter(e => e.entry_type === 'ENTRADA' || e.entry_type === 'ENTRADA_2');
-            const salidas = sortedEntries.filter(e => e.entry_type === 'SALIDA' || e.entry_type === 'SALIDA_2');
-            const pairs = Math.min(entradas.length, salidas.length);
-
-            for (let i = 0; i < pairs; i++) {
-                const entradaTime = new Date(entradas[i].clock_time).getTime();
-                const salidaTime = new Date(salidas[i].clock_time).getTime();
-                totalMinutes += (salidaTime - entradaTime) / (1000 * 60);
-            }
-
-            return Math.floor(totalMinutes / 60);
+            return `${hours}:${minutes}`;
         };
 
         const sortedDates = Object.keys(groupedEntries).sort((a, b) =>
@@ -635,7 +625,7 @@ export default function AdminScreen() {
                                                                 ]}>
                                                                     {dayOfMonth}
                                                                 </Text>
-                                                                {dayHasEntries && dayHours > 0 && (
+                                                                {dayHasEntries && dayHours !== '00:00' && (
                                                                     <Text style={[
                                                                         styles.calendarDayHours,
                                                                         isCurrentDay && styles.calendarDayHoursToday

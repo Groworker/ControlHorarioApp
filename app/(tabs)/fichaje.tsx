@@ -1,6 +1,7 @@
 import type { ClockEntry } from '@/lib/supabase';
 import { clockService, type EntryType } from '@/services/clock.service';
 import { notificationService } from '@/services/notification.service';
+import { calculateDailyMetrics } from '@/utils/timeCalculator';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -514,19 +515,7 @@ export default function FichajeScreen() {
 
   // Calcular tiempo total de descanso del día (en minutos)
   const calculateBreakTime = (entries: ClockEntry[]): number => {
-    const sortedEntries = [...entries].sort((a, b) =>
-      new Date(a.clock_time).getTime() - new Date(b.clock_time).getTime()
-    );
-
-    const descansos = sortedEntries.filter(e => e.entry_type === 'DESCANSO');
-    let totalBreakMinutes = 0;
-
-    // Calcular diferencia entre cada par de DESCANSO
-    for (let i = 0; i < descansos.length - 1; i += 2) {
-      const start = new Date(descansos[i].clock_time).getTime();
-      const end = new Date(descansos[i + 1].clock_time).getTime();
-      totalBreakMinutes += (end - start) / (1000 * 60);
-    }
+    let totalBreakMinutes = calculateDailyMetrics(entries).breakMinutes;
 
     // Si está en descanso ahora, añadir tiempo actual
     if (isOnBreak && breakStartTime) {
@@ -539,29 +528,7 @@ export default function FichajeScreen() {
 
   // Calcular horas trabajadas del día (en minutos)
   const calculateWorkedHours = (entries: ClockEntry[]): number => {
-    const sortedEntries = [...entries].sort((a, b) =>
-      new Date(a.clock_time).getTime() - new Date(b.clock_time).getTime()
-    );
-
-    let totalWorkedMinutes = 0;
-
-    // Encontrar todos los pares ENTRADA-SALIDA
-    const entradas = sortedEntries.filter(e => e.entry_type === 'ENTRADA' || e.entry_type === 'ENTRADA_2');
-    const salidas = sortedEntries.filter(e => e.entry_type === 'SALIDA' || e.entry_type === 'SALIDA_2');
-
-    // Calcular tiempo entre cada par
-    const pairs = Math.min(entradas.length, salidas.length);
-    for (let i = 0; i < pairs; i++) {
-      const entradaTime = new Date(entradas[i].clock_time).getTime();
-      const salidaTime = new Date(salidas[i].clock_time).getTime();
-      totalWorkedMinutes += (salidaTime - entradaTime) / (1000 * 60);
-    }
-
-    // Restar tiempo de descanso
-    const breakMinutes = calculateBreakTime(entries);
-    totalWorkedMinutes -= breakMinutes;
-
-    return Math.max(0, Math.floor(totalWorkedMinutes));
+    return calculateDailyMetrics(entries).workedMinutes;
   };
 
   const formatEntryTime = (dateStr: string) => {

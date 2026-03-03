@@ -1,4 +1,5 @@
 import { type ClockEntry } from '@/lib/supabase';
+import { calculateDailyMetrics } from '@/utils/timeCalculator';
 import { authService } from './auth.service';
 import { clockService } from './clock.service';
 import { userService } from './user.service';
@@ -104,8 +105,9 @@ export const dashboardService = {
                 workedMinutes: Math.floor(totalWorkedMinutes % 60),
                 breakHours: Math.floor(totalBreakMinutes / 60),
                 breakMinutes: Math.floor(totalBreakMinutes % 60),
-                overtimeHours: Math.floor(overtimeMinutes / 60),
-                overtimeMinutes: Math.floor(overtimeMinutes % 60),
+                // Para mantener el signo correcto al floor, usamos trunc o calculamos de forma absoluta
+                overtimeHours: overtimeMinutes < 0 ? Math.ceil(overtimeMinutes / 60) : Math.floor(overtimeMinutes / 60),
+                overtimeMinutes: Math.abs(Math.floor(overtimeMinutes % 60)),
                 expectedHours: expectedTotalMinutes / 60,
                 attendanceRate: Math.round(attendanceRate),
                 daysWorked,
@@ -221,8 +223,9 @@ export const dashboardService = {
                     current.setDate(current.getDate() + 1);
                 }
 
-                const expectedWeekMinutes = weeklyHours * 60;
-                const overtimeMinutes = Math.max(0, weekWorkedMinutes - expectedWeekMinutes);
+                const daysInWeek = this.getTotalDaysInPeriod(week.start, week.end);
+                const expectedWeekMinutes = daysInWeek * (weeklyHours / 7) * 60;
+                const overtimeMinutes = weekWorkedMinutes - expectedWeekMinutes;
 
                 breakdown.push({
                     weekNumber: index + 1,
@@ -232,8 +235,8 @@ export const dashboardService = {
                     workedMinutes: Math.floor(weekWorkedMinutes % 60),
                     breakHours: Math.floor(weekBreakMinutes / 60),
                     breakMinutes: Math.floor(weekBreakMinutes % 60),
-                    overtimeHours: Math.floor(overtimeMinutes / 60),
-                    overtimeMinutes: Math.floor(overtimeMinutes % 60),
+                    overtimeHours: overtimeMinutes < 0 ? Math.ceil(overtimeMinutes / 60) : Math.floor(overtimeMinutes / 60),
+                    overtimeMinutes: Math.abs(Math.floor(overtimeMinutes % 60)),
                 });
             });
 
@@ -260,43 +263,20 @@ export const dashboardService = {
      * Helper: Calculate daily metrics from entries
      */
     calculateDailyMetrics(dayEntries: ClockEntry[]): { workedMinutes: number; breakMinutes: number } {
-        let totalWorkedMinutes = 0;
-        let totalBreakMinutes = 0;
-
-        const entradas = dayEntries.filter(e => e.entry_type === 'ENTRADA' || e.entry_type === 'ENTRADA_2');
-        const salidas = dayEntries.filter(e => e.entry_type === 'SALIDA' || e.entry_type === 'SALIDA_2');
-        const descansos = dayEntries.filter(e => e.entry_type === 'DESCANSO');
-
-        // Calculate work time
-        const pairs = Math.min(entradas.length, salidas.length);
-        for (let i = 0; i < pairs; i++) {
-            const entradaTime = new Date(entradas[i].clock_time).getTime();
-            const salidaTime = new Date(salidas[i].clock_time).getTime();
-            totalWorkedMinutes += (salidaTime - entradaTime) / (1000 * 60);
-        }
-
-        // Calculate break time
-        for (let i = 0; i < descansos.length - 1; i += 2) {
-            const start = new Date(descansos[i].clock_time).getTime();
-            const end = new Date(descansos[i + 1].clock_time).getTime();
-            totalBreakMinutes += (end - start) / (1000 * 60);
-        }
-
-        // Real worked time = total work time - break time
-        const realWorkedMinutes = Math.max(0, totalWorkedMinutes - totalBreakMinutes);
-
-        return {
-            workedMinutes: realWorkedMinutes,
-            breakMinutes: totalBreakMinutes,
-        };
+        return calculateDailyMetrics(dayEntries);
     },
 
     /**
      * Helper: Get total days in period (all calendar days)
      */
     getTotalDaysInPeriod(start: Date, end: Date): number {
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end
+        const startDay = new Date(start);
+        startDay.setHours(0, 0, 0, 0);
+        const endDay = new Date(end);
+        endDay.setHours(0, 0, 0, 0);
+
+        const diffTime = Math.abs(endDay.getTime() - startDay.getTime());
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
         return diffDays;
     },
 

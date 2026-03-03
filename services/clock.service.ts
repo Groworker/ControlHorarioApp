@@ -1,4 +1,5 @@
 import { supabase, type ClockEntry } from '@/lib/supabase';
+import { calculateDailyMetrics } from '@/utils/timeCalculator';
 import { authService } from './auth.service';
 
 export type EntryType = 'ENTRADA' | 'SALIDA' | 'ENTRADA_2' | 'SALIDA_2' | 'DESCANSO';
@@ -132,28 +133,8 @@ export const clockService = {
 
         // Calcular horas para cada día
         Object.entries(entriesByDate).forEach(([date, dayEntries]) => {
-            let totalMinutes = 0;
-
-            // Ordenar por hora
-            dayEntries.sort((a, b) =>
-                new Date(a.clock_time).getTime() - new Date(b.clock_time).getTime()
-            );
-
-            // Calcular diferencias entre entradas y salidas
-            for (let i = 0; i < dayEntries.length - 1; i++) {
-                const current = dayEntries[i];
-                const next = dayEntries[i + 1];
-
-                // Si es entrada seguida de salida, calcular diferencia
-                if (
-                    (current.entry_type === 'ENTRADA' && next.entry_type === 'SALIDA') ||
-                    (current.entry_type === 'ENTRADA_2' && next.entry_type === 'SALIDA_2')
-                ) {
-                    const diff = new Date(next.clock_time).getTime() - new Date(current.clock_time).getTime();
-                    totalMinutes += diff / (1000 * 60);
-                }
-            }
-
+            const metrics = calculateDailyMetrics(dayEntries);
+            const totalMinutes = metrics.workedMinutes;
             const hours = Math.floor(totalMinutes / 60);
             const minutes = Math.floor(totalMinutes % 60);
 
@@ -219,35 +200,10 @@ export const clockService = {
 
             // Calcular horas por cada día
             Object.keys(entriesByDate).forEach(date => {
-                const dayEntries = entriesByDate[date].sort(
-                    (a: ClockEntry, b: ClockEntry) => new Date(a.clock_time).getTime() - new Date(b.clock_time).getTime()
-                );
+                const dayEntries = entriesByDate[date];
+                const metrics = calculateDailyMetrics(dayEntries);
+                const realMinutes = metrics.workedMinutes;
 
-                let totalWorkedMinutes = 0;
-                let totalBreakMinutes = 0;
-
-                // Calcular pares de ENTRADA-SALIDA
-                const entradas = dayEntries.filter((e: ClockEntry) => e.entry_type === 'ENTRADA' || e.entry_type === 'ENTRADA_2');
-                const salidas = dayEntries.filter((e: ClockEntry) => e.entry_type === 'SALIDA' || e.entry_type === 'SALIDA_2');
-                const descansos = dayEntries.filter((e: ClockEntry) => e.entry_type === 'DESCANSO');
-
-                // Calcular tiempo de trabajo total
-                const pairs = Math.min(entradas.length, salidas.length);
-                for (let i = 0; i < pairs; i++) {
-                    const entradaTime = new Date(entradas[i].clock_time).getTime();
-                    const salidaTime = new Date(salidas[i].clock_time).getTime();
-                    totalWorkedMinutes += (salidaTime - entradaTime) / (1000 * 60);
-                }
-
-                // Calcular tiempo de descanso
-                for (let i = 0; i < descansos.length - 1; i += 2) {
-                    const start = new Date(descansos[i].clock_time).getTime();
-                    const end = new Date(descansos[i + 1].clock_time).getTime();
-                    totalBreakMinutes += (end - start) / (1000 * 60);
-                }
-
-                // Horas reales = trabajo total - descansos
-                const realMinutes = Math.max(0, Math.floor(totalWorkedMinutes - totalBreakMinutes));
                 const hours = Math.floor(realMinutes / 60);
                 const minutes = Math.floor(realMinutes % 60);
 
